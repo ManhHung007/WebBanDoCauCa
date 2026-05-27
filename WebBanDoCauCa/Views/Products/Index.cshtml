@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Cửa hàng đồ câu";
+    // Chuyển đổi dữ liệu an toàn từ ViewBag
+    var categories = ViewBag.Categories as List<WebBanDoCauCa.Models.Category> ?? new List<WebBanDoCauCa.Models.Category>();
+    var categoryList = new SelectList(categories, "Id", "Name");
 }
 
 <div class="container mt-4">
@@ -13,19 +16,10 @@
                 <h5 class="fw-bold"><i class="fa-solid fa-filter"></i> Bộ lọc</h5>
                 <hr />
                 <form method="get" asp-action="Index">
-                    <h5 class="fw-bold"><i class="fa-solid fa-filter"></i> Bộ lọc</h5>
-                    <hr />
-
                     <div class="mb-3">
                         <label class="fw-bold small">Loại sản phẩm:</label>
-                        <select name="categoryId" class="form-select">
+                        <select name="categoryId" class="form-select" asp-items="categoryList">
                             <option value="">-- Tất cả loại --</option>
-                            @foreach (var cat in (SelectList)ViewBag.Categories)
-                            {
-                                <option value="@cat.Value" selected="@(Context.Request.Query["categoryId"] == cat.Value)">
-                                    @cat.Text
-                                </option>
-                            }
                         </select>
                     </div>
 
@@ -48,7 +42,7 @@
                         <input type="range" name="maxPrice" class="form-range"
                                min="@ViewBag.MinPrice" max="@ViewBag.MaxPrice"
                                value="@(Context.Request.Query["maxPrice"].ToString() ?? ViewBag.MaxPrice.ToString())"
-                               oninput="priceVal.innerText = parseInt(this.value).toLocaleString()">
+                               oninput="document.getElementById('priceVal').innerText = parseInt(this.value).toLocaleString()">
                     </div>
 
                     <div class="mb-3">
@@ -79,13 +73,11 @@
                             {
                                 <div class="sale-badge">-@item.DiscountPercent%</div>
                             }
-
                             <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none">
                                 <div class="p-3 text-center">
                                     <img src="@item.ImageUrl" class="card-img-top rounded product-image" alt="@item.Name">
                                 </div>
                             </a>
-
                             <div class="card-body text-center d-flex flex-column">
                                 <h6 class="card-title fw-bold text-dark product-name">@item.Name</h6>
                                 @if (item.IsSaleActive)
@@ -97,20 +89,13 @@
                                 }
                                 else
                                 {
+
                                     <p class="text-danger fw-bold mb-3 fs-5">@item.Price.ToString("N0") VNĐ</p>
                                 }
-
                                 <div class="mt-auto d-grid gap-2">
                                     <button type="button" class="btn btn-warning fw-bold btn-add-to-cart" data-id="@item.Id">
                                         <i class="fa-solid fa-cart-plus"></i> THÊM VÀO GIỎ
                                     </button>
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <div class="btn-group mt-2">
-                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
-                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></a>
-                                        </div>
-                                    }
                                 </div>
                             </div>
                         </div>
@@ -121,61 +106,23 @@
     </div>
 </div>
 
-<style>
-    /* Các style cũ của bạn giữ nguyên, bổ sung thêm style cho sidebar */
-    .product-card {
-        transition: all 0.35s ease;
-        border-radius: 18px;
-    }
-
-        .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 25px rgba(0,0,0,0.15) !important;
-        }
-
-    .product-image {
-        height: 200px;
-        object-fit: contain;
-        transition: 0.4s;
-    }
-
-    .product-card:hover .product-image {
-        transform: scale(1.05);
-    }
-
-    .sale-badge {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        background: #dc3545;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 10px;
-        font-weight: bold;
-    }
-
-    .sale-price {
-        color: #dc3545;
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-
-    .original-price {
-        color: #999;
-        text-decoration: line-through;
-        font-size: 0.9rem;
-    }
-</style>
-
 @section Scripts {
+    <form id="anti-forgery-form" style="display:none;">@Html.AntiForgeryToken()</form>
     <script>
-        // Script giỏ hàng giữ nguyên
         $('.btn-add-to-cart').click(function(e) {
             e.preventDefault();
             var productId = $(this).data('id');
-            $.post('/Cart/AddToCart', { productId: productId, quantity: 1 }, function(res) {
-                if(res.success) { $('#cart-count').text(res.newCount); alert("Đã thêm vào giỏ!"); }
-                else { alert(res.message); }
+            var token = $('#anti-forgery-form input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '@Url.Action("AddToCart", "Cart")',
+                type: 'POST',
+                data: { productId: productId, quantity: 1 },
+                headers: { 'RequestVerificationToken': token },
+                success: function(res) {
+                    if(res.success) { alert("Đã thêm vào giỏ!"); }
+                    else { alert(res.message || "Lỗi khi thêm giỏ hàng"); }
+                }
             });
         });
     </script>

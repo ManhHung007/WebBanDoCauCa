@@ -1,9 +1,4 @@
-﻿@using Microsoft.EntityFrameworkCore
-@inject WebBanDoCauCa.Models.ApplicationDbContext DbContext
-@{
-    var initialCartCount = DbContext.CartItems.Sum(c => c.Quantity);
-}
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -91,7 +86,6 @@
                                 <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="Tìm sản phẩm..." autocomplete="off" />
                                 <div id="suggestions" class="dropdown-menu shadow"></div>
                             </li>
-
                             <li class="nav-item dropdown ms-3">
                                 <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown"><i class="fa-solid fa-store"></i> Sản phẩm</a>
                                 <ul class="dropdown-menu dropdown-menu-dark shadow">
@@ -104,7 +98,6 @@
                                     <li><a class="dropdown-item" asp-controller="Products" asp-action="Index" asp-route-categoryId="5">Phụ kiện</a></li>
                                 </ul>
                             </li>
-
                             @if (User.Identity?.IsAuthenticated == true)
                             {
                                 @if (User.IsInRole("Admin"))
@@ -136,7 +129,7 @@
                             <li class="nav-item me-3">
                                 <a class="nav-link btn btn-outline-warning text-white px-3 py-1" asp-controller="Cart" asp-action="Index">
                                     <i class="fa-solid fa-cart-shopping"></i> Giỏ hàng
-                                    <span id="cart-count" class="badge bg-danger rounded-pill">@initialCartCount</span>
+                                    <span id="cart-count" class="badge bg-danger rounded-pill">0</span>
                                 </a>
                             </li>
                             <partial name="_LoginPartial" />
@@ -152,6 +145,16 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Tự động tải số lượng giỏ hàng khi trang vừa load xong
+        $(document).ready(function() {
+            $.get('@Url.Action("GetCartCount", "Cart")', function(data) {
+                $('#cart-count').text(data.count);
+            });
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

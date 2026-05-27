@@ -13,9 +13,6 @@ namespace WebBanDoCauCa.Controllers
             _context = context;
         }
 
-        // ==========================================================
-        // Cải tiến GetCartId: Đảm bảo Session được lưu ổn định
-        // ==========================================================
         private string GetCartId()
         {
             var cartId = HttpContext.Session.GetString("CartId");
@@ -23,10 +20,19 @@ namespace WebBanDoCauCa.Controllers
             {
                 cartId = Guid.NewGuid().ToString();
                 HttpContext.Session.SetString("CartId", cartId);
-                // Đảm bảo Session được lưu ngay lập tức
-                HttpContext.Session.CommitAsync().Wait();
             }
             return cartId;
+        }
+
+        // Dùng cho AJAX ở _Layout.cshtml để cập nhật số lượng giỏ hàng
+        [HttpGet]
+        public async Task<IActionResult> GetCartCount()
+        {
+            var cartId = GetCartId();
+            var count = await _context.CartItems
+                .Where(c => c.CartId == cartId)
+                .SumAsync(c => (int?)c.Quantity) ?? 0;
+            return Json(new { count = count });
         }
 
         public async Task<IActionResult> Index()
@@ -40,61 +46,55 @@ namespace WebBanDoCauCa.Controllers
             return View(cartItems);
         }
 
-        // ==========================================================
-        // THÊM VÀO GIỎ (Đã thêm kiểm tra lỗi)
-        // ==========================================================
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
-            try
+            if (quantity <= 0) return Json(new { success = false, message = "Số lượng không hợp lệ." });
+
+            var cartId = GetCartId();
+            var product = await _context.Products.FindAsync(productId);
+
+            if (product == null) return Json(new { success = false, message = "Sản phẩm không tồn tại." });
+
+            var cartItem = await _context.CartItems
+                .FirstOrDefaultAsync(c => c.ProductId == productId && c.CartId == cartId);
+
+            if (cartItem == null)
             {
-                if (quantity <= 0) return Json(new { success = false, message = "Số lượng không hợp lệ." });
-
-                var cartId = GetCartId();
-                var product = await _context.Products.FindAsync(productId);
-
-                if (product == null) return Json(new { success = false, message = "Sản phẩm không tồn tại." });
-
-                var cartItem = await _context.CartItems
-                    .FirstOrDefaultAsync(c => c.ProductId == productId && c.CartId == cartId);
-
-                if (cartItem == null)
+                _context.CartItems.Add(new CartItem
                 {
-                    _context.CartItems.Add(new CartItem
-                    {
-                        ProductId = productId,
-                        Quantity = quantity,
-                        CartId = cartId,
-                        DateCreated = DateTime.Now
-                    });
-                }
-                else
-                {
-                    cartItem.Quantity += quantity;
-                }
-
-                await _context.SaveChangesAsync();
-
-                var totalCount = await _context.CartItems.Where(c => c.CartId == cartId).SumAsync(c => c.Quantity);
-                return Json(new { success = true, newCount = totalCount });
+                    ProductId = productId,
+                    Quantity = quantity,
+                    CartId = cartId,
+                    DateCreated = DateTime.Now
+                });
             }
-            catch (Exception ex)
+            else
             {
-                return Json(new { success = false, message = "Lỗi hệ thống: " + ex.Message });
+                cartItem.Quantity += quantity;
             }
+
+            await _context.SaveChangesAsync();
+
+            var totalCount = await _context.CartItems.Where(c => c.CartId == cartId).SumAsync(c => c.Quantity);
+            return Json(new { success = true, newCount = totalCount });
         }
 
-        // ==========================================================
-        // THANH TOÁN (Checkout)
-        // ==========================================================
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(string customerName, string phone, string address)
         {
             var cartId = GetCartId();
-            var cartItems = await _context.CartItems.Include(c => c.Product).Where(c => c.CartId == cartId).ToListAsync();
+            var cartItems = await _context.CartItems
+                .Include(c => c.Product)
+                .Where(c => c.CartId == cartId)
+                .ToListAsync();
 
             if (!cartItems.Any())
                 return Json(new { success = false, message = "Giỏ hàng của bạn đang trống." });
+
+            var totalAmount = cartItems.Sum(x => (x.Product?.Price ?? 0) * x.Quantity);
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -106,7 +106,7 @@ namespace WebBanDoCauCa.Controllers
                     Address = address,
                     Status = "Pending",
                     OrderDate = DateTime.UtcNow,
-                    TotalAmount = cartItems.Sum(x => (x.Product?.Price ?? 0) * x.Quantity)
+                    TotalAmount = totalAmount
                 };
 
                 _context.Orders.Add(order);
@@ -117,7 +117,7 @@ namespace WebBanDoCauCa.Controllers
                     OrderId = order.Id,
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,
-                    Price = item.Product!.Price
+                    Price = item.Product?.Price ?? 0
                 }).ToList();
 
                 _context.OrderDetails.AddRange(details);
