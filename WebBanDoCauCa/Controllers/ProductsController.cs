@@ -15,9 +15,7 @@ namespace WebBanDoCauCa.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public ProductsController(
-            ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+        public ProductsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
@@ -54,7 +52,8 @@ namespace WebBanDoCauCa.Controllers
 
             ViewBag.Categories = new SelectList(
                 await _context.Categories.ToListAsync(),
-                "Id", "Name",
+                "Id",
+                "Name",
                 categoryId
             );
 
@@ -83,7 +82,7 @@ namespace WebBanDoCauCa.Controllers
         }
 
         // =========================
-        // CREATE GET
+        // CREATE (GET)
         // =========================
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
@@ -93,7 +92,7 @@ namespace WebBanDoCauCa.Controllers
         }
 
         // =========================
-        // CREATE POST (FIX UTC + SAFE DATA)
+        // CREATE (POST)
         // =========================
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -132,7 +131,7 @@ namespace WebBanDoCauCa.Controllers
                     return View(product);
                 }
 
-                // SALE RESET
+                // SALE RESET + UTC FIX
                 if (!product.IsOnSale)
                 {
                     product.DiscountPercent = 0;
@@ -141,7 +140,6 @@ namespace WebBanDoCauCa.Controllers
                 }
                 else
                 {
-                    // FIX NEON UTC ISSUE
                     if (product.SaleStartDate.HasValue)
                         product.SaleStartDate = DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
 
@@ -161,7 +159,7 @@ namespace WebBanDoCauCa.Controllers
         }
 
         // =========================
-        // EDIT
+        // EDIT (GET)
         // =========================
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
@@ -175,6 +173,9 @@ namespace WebBanDoCauCa.Controllers
             return View(product);
         }
 
+        // =========================
+        // EDIT (POST)
+        // =========================
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]

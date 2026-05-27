@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System;
-using System.Linq;
 using WebBanDoCauCa.Models;
 
 namespace WebBanDoCauCa.Models
@@ -51,7 +49,7 @@ namespace WebBanDoCauCa.Models
             });
 
             // =====================================================
-            // 3. STRING → TEXT (POSTGRES OPTIMIZATION)
+            // 3. STRING → TEXT (POSTGRES)
             // =====================================================
             if (Database.IsNpgsql())
             {
@@ -68,48 +66,24 @@ namespace WebBanDoCauCa.Models
             }
 
             // =====================================================
-            // 4. GLOBAL DATETIME → UTC FIX (SAFE VERSION)
+            // 4. IMPORTANT: KHÔNG DÙNG VALUECONVERTER DATE TIME
+            // (TRÁNH CS1660 + LỖI BUILD RENDER)
             // =====================================================
-            var utcConverter = new ValueConverter<DateTime, DateTime>(
-                v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
-                v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
-            );
-
-            var nullableUtcConverter = new ValueConverter<DateTime?, DateTime?>(
-                v => v.HasValue
-                    ? (v.Value.Kind == DateTimeKind.Utc ? v : v.Value.ToUniversalTime())
-                    : v,
-                v => v.HasValue
-                    ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)
-                    : v
-            );
-
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            {
-                foreach (var property in entityType.GetProperties())
-                {
-                    if (property.ClrType == typeof(DateTime))
-                    {
-                        property.SetValueConverter(utcConverter);
-                    }
-
-                    if (property.ClrType == typeof(DateTime?))
-                    {
-                        property.SetValueConverter(nullableUtcConverter);
-                    }
-                }
-            }
+            // 👉 Cách đúng: xử lý UTC ở controller/service, KHÔNG ép EF
 
             // =====================================================
-            // 5. SEED DATA - CATEGORY
+            // 5. SEED CATEGORY
             // =====================================================
             modelBuilder.Entity<Category>().HasData(
                 new Category { Id = 1, Name = "Cần câu" },
-                new Category { Id = 2, Name = "Máy câu" }
+                new Category { Id = 2, Name = "Máy câu" },
+                new Category { Id = 3, Name = "Dây câu" },
+                new Category { Id = 4, Name = "Mồi câu" },
+                new Category { Id = 5, Name = "Phụ kiện" }
             );
 
             // =====================================================
-            // 6. SEED DATA - PRODUCT
+            // 6. SEED PRODUCT (DEMO)
             // =====================================================
             modelBuilder.Entity<Product>().HasData(
                 new Product
@@ -139,7 +113,7 @@ namespace WebBanDoCauCa.Models
             );
 
             // =====================================================
-            // 7. SEED ROLE + ADMIN USER
+            // 7. SEED ROLE + ADMIN
             // =====================================================
             string adminRoleId = "8d04dce2-969a-435d-bba4-df3f325983dc";
             string adminUserId = "b7237254-8c44-486a-85b4-7b4455589025";
