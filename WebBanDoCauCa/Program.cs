@@ -4,11 +4,10 @@ using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- CẤU HÌNH DATABASE CHUẨN POSTGRESQL ---
+// --- CẤU HÌNH DATABASE ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// Ép buộc dùng Npgsql cho mọi môi trường để đồng bộ
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
@@ -37,19 +36,34 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// --- TỰ ĐỘNG CẬP NHẬT DATABASE ---
+// --- TỰ ĐỘNG CẬP NHẬT DATABASE & SEED DỮ LIỆU CƠ BẢN ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var db = services.GetRequiredService<ApplicationDbContext>();
-        db.Database.Migrate(); // Tự động chạy migration lên Neon
+
+        // 1. Áp dụng các Migration mới nhất lên Database
+        db.Database.Migrate();
+
+        // 2. TỰ ĐỘNG THÊM DANH MỤC NẾU TRỐNG (Khắc phục lỗi Dropdown)
+        if (!db.Categories.Any())
+        {
+            db.Categories.AddRange(
+                new Category { Name = "Cần câu" },
+                new Category { Name = "Máy câu" },
+                new Category { Name = "Dây câu" },
+                new Category { Name = "Mồi câu" },
+                new Category { Name = "Phụ kiện" }
+            );
+            db.SaveChanges();
+        }
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while migrating the database.");
+        logger.LogError(ex, "Có lỗi xảy ra khi cập nhật Database.");
     }
 }
 
