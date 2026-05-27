@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System;
 using System.Linq;
 using WebBanDoCauCa.Models;
@@ -67,23 +68,35 @@ namespace WebBanDoCauCa.Models
             }
 
             // =====================================================
-            // 4. GLOBAL DATETIME → UTC CONVERSION (FIX LỖI NEON)
+            // 4. GLOBAL DATETIME → UTC FIX (SAFE VERSION)
             // =====================================================
+            var utcConverter = new ValueConverter<DateTime, DateTime>(
+                v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
+            );
+
+            var nullableUtcConverter = new ValueConverter<DateTime?, DateTime?>(
+                v => v.HasValue
+                    ? (v.Value.Kind == DateTimeKind.Utc ? v : v.Value.ToUniversalTime())
+                    : v,
+                v => v.HasValue
+                    ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)
+                    : v
+            );
+
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
-                var dateTimeProperties = entityType.ClrType
-                    .GetProperties()
-                    .Where(p => p.PropertyType == typeof(DateTime)
-                             || p.PropertyType == typeof(DateTime?));
-
-                foreach (var property in dateTimeProperties)
+                foreach (var property in entityType.GetProperties())
                 {
-                    modelBuilder.Entity(entityType.Name)
-                        .Property(property.Name)
-                        .HasConversion(
-                            v => v.ToUniversalTime(),
-                            v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
-                        );
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(utcConverter);
+                    }
+
+                    if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(nullableUtcConverter);
+                    }
                 }
             }
 
