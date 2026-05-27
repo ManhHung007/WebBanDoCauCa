@@ -4,22 +4,13 @@ using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- CẤU HÌNH DATABASE ---
+// --- CẤU HÌNH DATABASE CHUẨN POSTGRESQL ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// Tự động chọn Provider dựa trên môi trường hoặc cấu hình
-// Khi deploy lên Render, ta sẽ cấu hình để nó dùng Npgsql (PostgreSQL)
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(connectionString)); // Máy cá nhân dùng SQL Server
-}
-else
-{
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseNpgsql(connectionString)); // Server dùng PostgreSQL (Neon.tech)
-}
+// Ép buộc dùng Npgsql cho mọi môi trường để đồng bộ
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 // --- CẤU HÌNH IDENTITY ---
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
@@ -49,8 +40,17 @@ var app = builder.Build();
 // --- TỰ ĐỘNG CẬP NHẬT DATABASE ---
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    var services = scope.ServiceProvider;
+    try
+    {
+        var db = services.GetRequiredService<ApplicationDbContext>();
+        db.Database.Migrate(); // Tự động chạy migration lên Neon
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating the database.");
+    }
 }
 
 // --- MIDDLEWARE ---
