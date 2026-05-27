@@ -22,20 +22,34 @@ namespace WebBanDoCauCa.Models
         {
             base.OnModelCreating(modelBuilder);
 
+            // 1. Cấu hình độ chính xác cho kiểu Decimal (Fix cảnh báo)
+            modelBuilder.Entity<Order>().Property(o => o.TotalAmount).HasPrecision(18, 2);
+            modelBuilder.Entity<OrderDetail>().Property(od => od.Price).HasPrecision(18, 2);
+            modelBuilder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
+
+            // 2. Chuyển đổi nvarchar sang text cho PostgreSQL
+            if (Database.IsNpgsql())
+            {
+                foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+                {
+                    foreach (var property in entityType.GetProperties())
+                    {
+                        if (property.ClrType == typeof(string))
+                        {
+                            property.SetColumnType("text");
+                        }
+                    }
+                }
+            }
+
+            // 3. Seed dữ liệu Admin
             string adminRoleId = "8d04dce2-969a-435d-bba4-df3f325983dc";
             string adminUserId = "b7237254-8c44-486a-85b4-7b4455589025";
 
-            // 1. TẠO ROLE ADMIN
             modelBuilder.Entity<IdentityRole>().HasData(
-                new IdentityRole
-                {
-                    Id = adminRoleId,
-                    Name = "Admin",
-                    NormalizedName = "ADMIN"
-                }
+                new IdentityRole { Id = adminRoleId, Name = "Admin", NormalizedName = "ADMIN" }
             );
 
-            // 2. TẠO USER ADMIN
             var adminUser = new ApplicationUser
             {
                 Id = adminUserId,
@@ -45,22 +59,14 @@ namespace WebBanDoCauCa.Models
                 NormalizedEmail = "ADMIN@FISHINGPRO.COM",
                 EmailConfirmed = true,
                 FullName = "Administrator",
-                Address = "Hanoi, Vietnam"
+                Address = "Hanoi, Vietnam",
+                PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(null!, "Admin@123")
             };
-
-            // HASH PASSWORD
-            var ph = new PasswordHasher<ApplicationUser>();
-            adminUser.PasswordHash = ph.HashPassword(adminUser, "Admin@123");
 
             modelBuilder.Entity<ApplicationUser>().HasData(adminUser);
 
-            // 3. GÁN QUYỀN (SỬ DỤNG IdentityUserRole<string> ĐỂ TRÁNH LỖI)
             modelBuilder.Entity<IdentityUserRole<string>>().HasData(
-                new IdentityUserRole<string>
-                {
-                    RoleId = adminRoleId,
-                    UserId = adminUserId
-                }
+                new IdentityUserRole<string> { RoleId = adminRoleId, UserId = adminUserId }
             );
         }
     }

@@ -12,8 +12,8 @@ using WebBanDoCauCa.Models;
 namespace WebBanDoCauCa.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260526151058_UpdateToCustomUser")]
-    partial class UpdateToCustomUser
+    [Migration("20260527043057_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -85,7 +85,7 @@ namespace WebBanDoCauCa.Migrations
                     b.ToTable("AspNetRoleClaims", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.ApplicationUserClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -110,7 +110,7 @@ namespace WebBanDoCauCa.Migrations
                     b.ToTable("AspNetUserClaims", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.ApplicationUserLogin<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
                         .HasMaxLength(128)
@@ -134,7 +134,7 @@ namespace WebBanDoCauCa.Migrations
                     b.ToTable("AspNetUserLogins", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.ApplicationUserRole<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
@@ -156,7 +156,7 @@ namespace WebBanDoCauCa.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.ApplicationUserToken<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
@@ -253,16 +253,16 @@ namespace WebBanDoCauCa.Migrations
                             Id = "b7237254-8c44-486a-85b4-7b4455589025",
                             AccessFailedCount = 0,
                             Address = "Hanoi, Vietnam",
-                            ConcurrencyStamp = "ab1f44d4-98ab-4d21-bd44-a2de28451a00",
+                            ConcurrencyStamp = "32f4e785-5f64-4bbf-94d4-e0c02d74063f",
                             Email = "admin@fishingpro.com",
                             EmailConfirmed = true,
                             FullName = "Administrator",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@FISHINGPRO.COM",
                             NormalizedUserName = "ADMIN@FISHINGPRO.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEGOZNfT7HHhJJVJyN5nnHie3okkabBOAfD/ascg2ED6Ec7tL2W64BWCTNp30+vfBCg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMYfKMimFDUu0YygEf5yGFmUTnpBlWG4MXVy/Gs0c6HQMOxORaESoj0S8q6YBY6zKg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "23bdf941-7528-486b-a2d9-8ad8965175eb",
+                            SecurityStamp = "7b758ed0-2bd2-4c65-97ab-b074b3e813bb",
                             TwoFactorEnabled = false,
                             UserName = "admin@fishingpro.com"
                         });
@@ -340,6 +340,7 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("UserId")
@@ -364,6 +365,7 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
@@ -415,6 +417,7 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("SaleEndDate")
@@ -471,7 +474,7 @@ namespace WebBanDoCauCa.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.ApplicationUserClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
                     b.HasOne("WebBanDoCauCa.Models.ApplicationUser", null)
                         .WithMany()
@@ -480,7 +483,7 @@ namespace WebBanDoCauCa.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.ApplicationUserLogin<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.HasOne("WebBanDoCauCa.Models.ApplicationUser", null)
                         .WithMany()
@@ -489,7 +492,7 @@ namespace WebBanDoCauCa.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.ApplicationUserRole<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
                         .WithMany()
@@ -504,7 +507,7 @@ namespace WebBanDoCauCa.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.ApplicationUserToken<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
                     b.HasOne("WebBanDoCauCa.Models.ApplicationUser", null)
                         .WithMany()

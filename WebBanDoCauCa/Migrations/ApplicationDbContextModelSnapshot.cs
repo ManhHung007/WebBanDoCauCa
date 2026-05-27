@@ -250,16 +250,16 @@ namespace WebBanDoCauCa.Migrations
                             Id = "b7237254-8c44-486a-85b4-7b4455589025",
                             AccessFailedCount = 0,
                             Address = "Hanoi, Vietnam",
-                            ConcurrencyStamp = "1c98b40e-f974-4d66-813c-a2952c8ad509",
+                            ConcurrencyStamp = "32f4e785-5f64-4bbf-94d4-e0c02d74063f",
                             Email = "admin@fishingpro.com",
                             EmailConfirmed = true,
                             FullName = "Administrator",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@FISHINGPRO.COM",
                             NormalizedUserName = "ADMIN@FISHINGPRO.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDHt4EH4ibFhLcwfMO+D3vXzxiMGg2sE+99S5OxU99ilOaalM3pS9zVMKprmr/ibrg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMYfKMimFDUu0YygEf5yGFmUTnpBlWG4MXVy/Gs0c6HQMOxORaESoj0S8q6YBY6zKg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "34ba0044-ab1d-4d3d-88f1-ec20932d0d5e",
+                            SecurityStamp = "7b758ed0-2bd2-4c65-97ab-b074b3e813bb",
                             TwoFactorEnabled = false,
                             UserName = "admin@fishingpro.com"
                         });
@@ -337,6 +337,7 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("UserId")
@@ -361,6 +362,7 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
@@ -412,6 +414,7 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("SaleEndDate")
