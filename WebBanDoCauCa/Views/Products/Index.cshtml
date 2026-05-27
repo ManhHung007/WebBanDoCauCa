@@ -1,78 +1,75 @@
 ﻿@model IEnumerable<WebBanDoCauCa.Models.Product>
-
 @{
     ViewData["Title"] = "Cửa hàng đồ câu";
+    var categories = ViewBag.Categories as IEnumerable<WebBanDoCauCa.Models.Category>;
 }
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between mb-4">
-        <h2 class="text-primary fw-bold text-uppercase">Danh sách sản phẩm</h2>
-        @if (User.IsInRole("Admin"))
-        {
-            <a asp-action="Create" class="btn btn-success fw-bold"><i class="fa-solid fa-plus"></i> Thêm sản phẩm mới</a>
-        }
-    </div>
-
     <div class="row">
-        @foreach (var item in Model)
-        {
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card h-100 shadow-sm border-0 product-card">
-
-                    <div class="product-image-wrapper"
-                         style="height: 200px;
-                                    width: 100%;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    background-color: #f8f9fa;
-                                    padding: 15px;
-                                    border-bottom: 1px solid #eee;">
-
-                        <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/200" : item.ImageUrl)"
-                             class="card-img-top"
-                             alt="@item.Name"
-                             style="max-width: 100%;
-                                        max-height: 100%;
-                                        object-fit: contain;
-                                        transition: transform 0.3s ease;">
-                    </div>
-
-                    <div class="card-body text-center d-flex flex-column">
-                        <h6 class="fw-bold mb-2">@item.Name</h6>
-
-                        <div class="mb-3">
-                            @if (item.IsSaleActive)
-                            {
-                                <p class="text-decoration-line-through text-muted small mb-0">@item.Price.ToString("N0") VNĐ</p>
-                                <p class="text-danger fw-bold fs-5">@item.SalePrice.ToString("N0") VNĐ</p>
-                            }
-                            else
-                            {
-                                <p class="text-danger fw-bold fs-5">@item.Price.ToString("N0") VNĐ</p>
-                            }
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <h5 class="fw-bold">Bộ lọc</h5>
+                <hr>
+                <div class="mb-3">
+                    <label class="fw-bold">Danh mục</label>
+                    @foreach (var cat in categories)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input cat-filter" type="checkbox" value="@cat.Id" id="cat_@cat.Id">
+                            <label class="form-check-label" for="cat_@cat.Id">@cat.Name</label>
                         </div>
-
-                        <div class="mt-auto d-grid gap-2">
-                            <button class="btn btn-warning btn-add-to-cart" data-id="@item.Id">Thêm vào giỏ</button>
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <div class="btn-group mt-2">
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Sửa</a>
-                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Xóa</a>
-                                </div>
-                            }
-                        </div>
-                    </div>
+                    }
                 </div>
+                <div class="mb-3">
+                    <label class="fw-bold">Giá: <span id="priceVal">0 - 5.000.000</span></label>
+                    <input type="range" class="form-range" min="0" max="5000000" step="100000" id="priceRange">
+                </div>
+                <button class="btn btn-primary w-100" onclick="applyFilters()">Áp dụng lọc</button>
             </div>
-        }
+        </div>
+
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold">Sản phẩm</h4>
+                <select class="form-select w-25" onchange="window.location.href='?sortOrder=' + this.value">
+                    <option value="">Sắp xếp giá</option>
+                    <option value="price_asc">Thấp đến cao</option>
+                    <option value="price_desc">Cao đến thấp</option>
+                </select>
+            </div>
+
+            <div class="row">
+                @foreach (var item in Model)
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow-sm border-0">
+                            <img src="@item.ImageUrl" class="card-img-top" style="height:200px; object-fit:contain;">
+                            <div class="card-body text-center">
+                                <h6 class="fw-bold">@item.Name</h6>
+                                <p class="text-danger fw-bold">@item.Price.ToString("N0") VNĐ</p>
+                                <div class="d-grid gap-2">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">Xem chi tiết</a>
+                                    <button class="btn btn-warning btn-sm btn-add-to-cart" data-id="@item.Id">Thêm giỏ hàng</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
 </div>
 
-<style>
-    /* Hiệu ứng zoom nhẹ khi di chuột vào ảnh */
-    .product-card:hover img {
-        transform: scale(1.05);
+<script>
+    // Xử lý slider giá
+    document.getElementById('priceRange').oninput = function() {
+        document.getElementById('priceVal').innerText = "0 - " + parseInt(this.value).toLocaleString();
     }
-</style>
+
+    function applyFilters() {
+        let cats = [];
+        $('.cat-filter:checked').each(function() { cats.push($(this).val()); });
+        let maxPrice = $('#priceRange').val();
+        window.location.href = `?categoryIds=${cats.join(',')}&maxPrice=${maxPrice}`;
+    }
+</script>

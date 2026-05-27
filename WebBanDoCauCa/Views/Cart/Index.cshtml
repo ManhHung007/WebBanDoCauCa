@@ -13,42 +13,38 @@
             <table class="table table-hover align-middle bg-white">
                 <thead class="table-dark">
                     <tr>
-                        <th style="width: 15%">Hình ảnh</th>
+                        <th>Hình ảnh</th>
                         <th>Sản phẩm</th>
                         <th class="text-center">Số lượng</th>
                         <th class="text-end">Đơn giá</th>
                         <th class="text-end">Thành tiền</th>
+                        <th class="text-center">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        <tr>
+                        <tr id="cart-item-@item.Id">
                             <td>
                                 <img src="@item.Product?.ImageUrl" alt="@item.Product?.Name" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: contain;">
                             </td>
                             <td>
                                 <div class="fw-bold text-dark">@item.Product?.Name</div>
-                                <small class="text-muted">Mã SP: #@item.ProductId</small>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-light text-dark border p-2">@item.Quantity</span>
+                                <input type="number" value="@item.Quantity" min="1" class="form-control form-control-sm mx-auto quantity-input"
+                                       data-id="@item.Id" style="width: 60px;">
                             </td>
                             <td class="text-end">@item.Product?.Price.ToString("N0") VNĐ</td>
-                            <td class="text-end fw-bold text-danger">
-                                @((item.Quantity * item.Product?.Price ?? 0).ToString("N0")) VNĐ
+                            <td class="text-end fw-bold">@((item.Quantity * (item.Product?.Price ?? 0)).ToString("N0")) VNĐ</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-danger remove-item" data-id="@item.Id">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     }
                 </tbody>
-                <tfoot>
-                    <tr class="table-light">
-                        <td colspan="4" class="text-end fw-bold h5">Tổng cộng:</td>
-                        <td class="text-end fw-bold h4 text-danger">
-                            @Model.Sum(x => x.Quantity * (x.Product?.Price ?? 0)).ToString("N0") VNĐ
-                        </td>
-                    </tr>
-                </tfoot>
             </table>
         </div>
 
@@ -56,11 +52,7 @@
             <a class="btn btn-outline-secondary fw-bold" asp-controller="Products" asp-action="Index">
                 <i class="fa-solid fa-arrow-left"></i> TIẾP TỤC MUA SẮM
             </a>
-
-            @* NÚT QUAN TRỌNG NHẤT: DẪN ĐẾN TRANG THANH TOÁN *@
-            <a class="btn btn-success btn-lg px-5 fw-bold shadow"
-               asp-controller="Checkout"
-               asp-action="Index">
+            <a class="btn btn-success btn-lg px-5 fw-bold shadow" asp-controller="Checkout" asp-action="Index">
                 TIẾN HÀNH THANH TOÁN <i class="fa-solid fa-credit-card ms-2"></i>
             </a>
         </div>
@@ -70,7 +62,28 @@
         <div class="alert alert-warning text-center py-5">
             <i class="fa-solid fa-cart-arrow-down fa-3x mb-3"></i>
             <h4>Giỏ hàng của bạn đang trống!</h4>
-            <a class="btn btn-primary mt-3" asp-controller="Products" asp-action="Index">Mua sắm ngay</a>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-primary mt-3">Quay lại mua sắm</a>
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        // Xử lý Xóa sản phẩm
+        $('.remove-item').click(function() {
+            var id = $(this).data('id');
+            $.post('/Cart/RemoveItem', { id: id }, function() {
+                location.reload(); // Tải lại trang để cập nhật tổng tiền
+            });
+        });
+
+        // Xử lý Thay đổi số lượng
+        $('.quantity-input').change(function() {
+            var id = $(this).data('id');
+            var qty = $(this).val();
+            $.post('/Cart/UpdateQuantity', { id: id, quantity: qty }, function() {
+                location.reload();
+            });
+        });
+    </script>
+}
