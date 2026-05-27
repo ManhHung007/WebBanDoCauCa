@@ -17,7 +17,7 @@ namespace WebBanDoCauCa.Models
 
         [Required(ErrorMessage = "Giá sản phẩm là bắt buộc")]
         [Column(TypeName = "decimal(18,2)")]
-        [Range(0, double.MaxValue, ErrorMessage = "Giá không được âm")]
+        [Range(0.01, (double)decimal.MaxValue, ErrorMessage = "Giá phải lớn hơn 0")]
         public decimal Price { get; set; }
 
         public string? ImageUrl { get; set; }
@@ -34,30 +34,25 @@ namespace WebBanDoCauCa.Models
         [Range(0, 100, ErrorMessage = "Phần trăm giảm giá từ 0-100")]
         public int DiscountPercent { get; set; } = 0;
 
-        // PostgreSQL yêu cầu các trường này tương thích với UTC
+        // FIX: Chỉ định rõ kiểu timestamp cho PostgreSQL/Neon
+        [Column(TypeName = "timestamp with time zone")]
         public DateTime? SaleStartDate { get; set; }
 
+        [Column(TypeName = "timestamp with time zone")]
         public DateTime? SaleEndDate { get; set; }
 
         public string? Brand { get; set; }
 
         [NotMapped]
-        public decimal SalePrice
-        {
-            get
-            {
-                return IsSaleActive
-                    ? Price - (Price * DiscountPercent / 100)
-                    : Price;
-            }
-        }
+        public decimal SalePrice => IsSaleActive
+            ? Price - (Price * DiscountPercent / 100)
+            : Price;
 
         [NotMapped]
         public bool IsSaleActive
         {
             get
             {
-                // Sử dụng UtcNow để so sánh chuẩn với Database
                 var now = DateTime.UtcNow;
                 return IsOnSale
                     && DiscountPercent > 0
