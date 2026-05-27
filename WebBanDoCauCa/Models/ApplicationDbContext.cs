@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using WebBanDoCauCa.Models;
 
 namespace WebBanDoCauCa.Models
 {
@@ -20,12 +23,24 @@ namespace WebBanDoCauCa.Models
         {
             base.OnModelCreating(modelBuilder);
 
-            // 1. Cấu hình độ chính xác cho các cột kiểu Decimal
-            modelBuilder.Entity<Order>().Property(o => o.TotalAmount).HasPrecision(18, 2);
-            modelBuilder.Entity<OrderDetail>().Property(od => od.Price).HasPrecision(18, 2);
-            modelBuilder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
+            // =====================================================
+            // 1. DECIMAL PRECISION
+            // =====================================================
+            modelBuilder.Entity<Order>()
+                .Property(o => o.TotalAmount)
+                .HasPrecision(18, 2);
 
-            // 2. Cấu hình kiểu dữ liệu cho Postgres (Identity)
+            modelBuilder.Entity<OrderDetail>()
+                .Property(od => od.Price)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Product>()
+                .Property(p => p.Price)
+                .HasPrecision(18, 2);
+
+            // =====================================================
+            // 2. IDENTITY BOOLEAN FIX (POSTGRES)
+            // =====================================================
             modelBuilder.Entity<ApplicationUser>(entity =>
             {
                 entity.Property(u => u.EmailConfirmed).HasColumnType("boolean");
@@ -34,7 +49,9 @@ namespace WebBanDoCauCa.Models
                 entity.Property(u => u.LockoutEnabled).HasColumnType("boolean");
             });
 
-            // 3. Tự động chuyển string sang 'text' cho PostgreSQL
+            // =====================================================
+            // 3. STRING → TEXT (POSTGRES OPTIMIZATION)
+            // =====================================================
             if (Database.IsNpgsql())
             {
                 foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -42,28 +59,85 @@ namespace WebBanDoCauCa.Models
                     foreach (var property in entityType.GetProperties())
                     {
                         if (property.ClrType == typeof(string))
+                        {
                             property.SetColumnType("text");
+                        }
                     }
                 }
             }
 
-            // 4. SEED DỮ LIỆU CƠ BẢN (Categories & Products)
+            // =====================================================
+            // 4. GLOBAL DATETIME → UTC CONVERSION (FIX LỖI NEON)
+            // =====================================================
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                var dateTimeProperties = entityType.ClrType
+                    .GetProperties()
+                    .Where(p => p.PropertyType == typeof(DateTime)
+                             || p.PropertyType == typeof(DateTime?));
+
+                foreach (var property in dateTimeProperties)
+                {
+                    modelBuilder.Entity(entityType.Name)
+                        .Property(property.Name)
+                        .HasConversion(
+                            v => v.ToUniversalTime(),
+                            v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
+                        );
+                }
+            }
+
+            // =====================================================
+            // 5. SEED DATA - CATEGORY
+            // =====================================================
             modelBuilder.Entity<Category>().HasData(
                 new Category { Id = 1, Name = "Cần câu" },
                 new Category { Id = 2, Name = "Máy câu" }
             );
 
+            // =====================================================
+            // 6. SEED DATA - PRODUCT
+            // =====================================================
             modelBuilder.Entity<Product>().HasData(
-                new Product { Id = 1, Name = "Cần câu Shimano", Price = 1500000, CategoryId = 1, Brand = "Shimano" },
-                new Product { Id = 2, Name = "Máy câu Daiwa", Price = 2000000, CategoryId = 2, Brand = "Daiwa" }
+                new Product
+                {
+                    Id = 1,
+                    Name = "Cần câu Shimano",
+                    Price = 1500000,
+                    CategoryId = 1,
+                    Brand = "Shimano",
+                    ImageUrl = "",
+                    IsHot = false,
+                    IsOnSale = false,
+                    DiscountPercent = 0
+                },
+                new Product
+                {
+                    Id = 2,
+                    Name = "Máy câu Daiwa",
+                    Price = 2000000,
+                    CategoryId = 2,
+                    Brand = "Daiwa",
+                    ImageUrl = "",
+                    IsHot = false,
+                    IsOnSale = false,
+                    DiscountPercent = 0
+                }
             );
 
-            // 5. SEED DỮ LIỆU ADMIN & PHÂN QUYỀN
+            // =====================================================
+            // 7. SEED ROLE + ADMIN USER
+            // =====================================================
             string adminRoleId = "8d04dce2-969a-435d-bba4-df3f325983dc";
             string adminUserId = "b7237254-8c44-486a-85b4-7b4455589025";
 
             modelBuilder.Entity<IdentityRole>().HasData(
-                new IdentityRole { Id = adminRoleId, Name = "Admin", NormalizedName = "ADMIN" }
+                new IdentityRole
+                {
+                    Id = adminRoleId,
+                    Name = "Admin",
+                    NormalizedName = "ADMIN"
+                }
             );
 
             var adminUser = new ApplicationUser
@@ -76,14 +150,19 @@ namespace WebBanDoCauCa.Models
                 EmailConfirmed = true,
                 FullName = "Administrator",
                 Address = "Hanoi, Vietnam",
-                PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(null!, "Admin@123"),
+                PasswordHash = new PasswordHasher<ApplicationUser>()
+                    .HashPassword(null!, "Admin@123"),
                 SecurityStamp = Guid.NewGuid().ToString()
             };
 
             modelBuilder.Entity<ApplicationUser>().HasData(adminUser);
 
             modelBuilder.Entity<IdentityUserRole<string>>().HasData(
-                new IdentityUserRole<string> { RoleId = adminRoleId, UserId = adminUserId }
+                new IdentityUserRole<string>
+                {
+                    RoleId = adminRoleId,
+                    UserId = adminUserId
+                }
             );
         }
     }
