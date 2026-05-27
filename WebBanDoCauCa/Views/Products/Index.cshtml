@@ -2,127 +2,127 @@
 
 @{
     ViewData["Title"] = "Cửa hàng đồ câu";
-    // Chuyển đổi dữ liệu an toàn từ ViewBag
-    var categories = ViewBag.Categories as List<WebBanDoCauCa.Models.Category> ?? new List<WebBanDoCauCa.Models.Category>();
+    var categories = ViewBag.Categories as List<WebBanDoCauCa.Models.Category>
+                     ?? new List<WebBanDoCauCa.Models.Category>();
     var categoryList = new SelectList(categories, "Id", "Name");
 }
 
+<style>
+    .filter-box {
+        position: sticky;
+        top: 80px;
+        z-index: 10;
+    }
+</style>
+
 <div class="container mt-4">
-    <h2 class="text-primary fw-bold text-uppercase mb-4">@ViewData["CurrentCategory"]</h2>
+    <h2 class="text-primary fw-bold text-uppercase mb-4">Cửa hàng</h2>
 
     <div class="row">
+
+        <!-- FILTER -->
         <div class="col-md-3">
-            <div class="card shadow-sm p-3 mb-4">
-                <h5 class="fw-bold"><i class="fa-solid fa-filter"></i> Bộ lọc</h5>
+            <div class="card shadow-sm p-3 mb-4 filter-box">
+
+                <h5 class="fw-bold">Bộ lọc</h5>
                 <hr />
+
                 <form method="get" asp-action="Index">
+
+                    <!-- CATEGORY -->
                     <div class="mb-3">
-                        <label class="fw-bold small">Loại sản phẩm:</label>
-                        <select name="categoryId" class="form-select" asp-items="categoryList">
-                            <option value="">-- Tất cả loại --</option>
+                        <label class="fw-bold small">Loại sản phẩm</label>
+                        <select name="categoryIds" class="form-select" asp-items="categoryList">
+                            <option value="">-- Tất cả --</option>
                         </select>
                     </div>
 
+                    <!-- PRICE RANGE -->
                     <div class="mb-3">
-                        <label class="fw-bold small">Hãng sản xuất:</label>
-                        <select name="brand" class="form-select">
-                            <option value="">Tất cả hãng</option>
-                            @if (ViewBag.Brands != null)
-                            {
-                                foreach (var b in (List<string>)ViewBag.Brands)
-                                {
-                                    <option value="@b" selected="@(Context.Request.Query["brand"] == b)">@b</option>
-                                }
-                            }
-                        </select>
-                    </div>
+                        <label class="fw-bold small">
+                            Giá tối đa:
+                            <span id="priceVal" class="text-danger">
+                                @ViewBag.MaxPrice.ToString("N0")
+                            </span>đ
+                        </label>
 
-                    <div class="mb-3">
-                        <label class="fw-bold small">Giá tối đa: <span id="priceVal" class="text-danger">@ViewBag.MaxPrice</span>đ</label>
-                        <input type="range" name="maxPrice" class="form-range"
-                               min="@ViewBag.MinPrice" max="@ViewBag.MaxPrice"
-                               value="@(Context.Request.Query["maxPrice"].ToString() ?? ViewBag.MaxPrice.ToString())"
+                        <input type="range"
+                               name="maxPrice"
+                               class="form-range"
+                               min="@ViewBag.MinPrice"
+                               max="@ViewBag.MaxPrice"
+                               value="@ViewBag.MaxPrice"
                                oninput="document.getElementById('priceVal').innerText = parseInt(this.value).toLocaleString()">
                     </div>
 
+                    <!-- SORT -->
                     <div class="mb-3">
-                        <label class="fw-bold small">Sắp xếp theo:</label>
+                        <label class="fw-bold small">Sắp xếp</label>
                         <select name="sortOrder" class="form-select">
-                            <option value="price_asc" selected="@(Context.Request.Query["sortOrder"] == "price_asc")">Giá thấp đến cao</option>
-                            <option value="price_desc" selected="@(Context.Request.Query["sortOrder"] == "price_desc")">Giá cao đến thấp</option>
+                            <option value="">Mới nhất</option>
+                            <option value="price_asc">Giá tăng</option>
+                            <option value="price_desc">Giá giảm</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">Áp dụng</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary w-100 mt-2 btn-sm">Xóa lọc</a>
+                    <button class="btn btn-primary w-100">Lọc</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">Reset</a>
+
                 </form>
             </div>
         </div>
 
+        <!-- PRODUCT LIST -->
         <div class="col-md-9">
             <div class="row">
+
                 @if (!Model.Any())
                 {
-                    <p class="text-center">Không tìm thấy sản phẩm nào.</p>
+                    <p>Không có sản phẩm</p>
                 }
+
                 @foreach (var item in Model)
                 {
                     <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="card h-100 shadow-sm border-0 product-card position-relative">
-                            @if (item.IsSaleActive)
-                            {
-                                <div class="sale-badge">-@item.DiscountPercent%</div>
-                            }
-                            <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none">
-                                <div class="p-3 text-center">
-                                    <img src="@item.ImageUrl" class="card-img-top rounded product-image" alt="@item.Name">
-                                </div>
-                            </a>
-                            <div class="card-body text-center d-flex flex-column">
-                                <h6 class="card-title fw-bold text-dark product-name">@item.Name</h6>
-                                @if (item.IsSaleActive)
-                                {
-                                    <div class="mb-3">
-                                        <div class="sale-price">@item.SalePrice.ToString("N0") VNĐ</div>
-                                        <div class="original-price">@item.Price.ToString("N0") VNĐ</div>
-                                    </div>
-                                }
-                                else
-                                {
 
-                                    <p class="text-danger fw-bold mb-3 fs-5">@item.Price.ToString("N0") VNĐ</p>
-                                }
-                                <div class="mt-auto d-grid gap-2">
-                                    <button type="button" class="btn btn-warning fw-bold btn-add-to-cart" data-id="@item.Id">
-                                        <i class="fa-solid fa-cart-plus"></i> THÊM VÀO GIỎ
-                                    </button>
-                                </div>
+                        <div class="card shadow-sm h-100">
+
+                            <a asp-action="Details" asp-route-id="@item.Id">
+                                <img src="@item.ImageUrl" class="card-img-top" />
+                            </a>
+
+                            <div class="card-body text-center">
+
+                                <h6>@item.Name</h6>
+
+                                <p class="text-danger fw-bold">
+                                    @item.Price.ToString("N0") đ
+                                </p>
+
+                                <button class="btn btn-warning btn-add-to-cart"
+                                        data-id="@item.Id">
+                                    Thêm vào giỏ
+                                </button>
+
                             </div>
                         </div>
+
                     </div>
                 }
+
             </div>
         </div>
+
     </div>
 </div>
 
 @section Scripts {
-    <form id="anti-forgery-form" style="display:none;">@Html.AntiForgeryToken()</form>
     <script>
-        $('.btn-add-to-cart').click(function(e) {
-            e.preventDefault();
+        $('.btn-add-to-cart').click(function () {
             var productId = $(this).data('id');
-            var token = $('#anti-forgery-form input[name="__RequestVerificationToken"]').val();
 
-            $.ajax({
-                url: '@Url.Action("AddToCart", "Cart")',
-                type: 'POST',
-                data: { productId: productId, quantity: 1 },
-                headers: { 'RequestVerificationToken': token },
-                success: function(res) {
-                    if(res.success) { alert("Đã thêm vào giỏ!"); }
-                    else { alert(res.message || "Lỗi khi thêm giỏ hàng"); }
-                }
+            $.post('/Cart/AddToCart', { productId: productId, quantity: 1 }, function (res) {
+                alert(res.success ? "Đã thêm vào giỏ" : "Lỗi");
             });
         });
     </script>

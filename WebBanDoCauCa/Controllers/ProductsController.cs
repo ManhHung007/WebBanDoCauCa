@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using WebBanDoCauCa.Models;
-using System.Collections.Generic;
 
 namespace WebBanDoCauCa.Controllers
 {
@@ -23,36 +22,57 @@ namespace WebBanDoCauCa.Controllers
         }
 
         // =========================
-        // INDEX (Với bộ lọc nâng cao)
+        // INDEX (FILTER FULL FIX)
         // =========================
-        public async Task<IActionResult> Index(string categoryIds, decimal? maxPrice, string sortOrder)
+        public async Task<IActionResult> Index(string categoryIds, decimal? minPrice, decimal? maxPrice, string sortOrder)
         {
-            var query = _context.Products.Include(p => p.Category).AsQueryable();
+            var query = _context.Products
+                .Include(p => p.Category)
+                .AsQueryable();
 
-            // 1. Lọc theo nhiều danh mục (categoryIds truyền dạng "1,2,3")
+            // =========================
+            // 1. Filter Category (SAFE PARSE)
+            // =========================
             if (!string.IsNullOrWhiteSpace(categoryIds))
             {
-                var idList = categoryIds.Split(',').Select(int.Parse).ToList();
+                var idList = categoryIds
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => int.TryParse(x, out var v) ? v : 0)
+                    .Where(x => x > 0)
+                    .ToList();
+
                 query = query.Where(p => idList.Contains(p.CategoryId));
             }
 
-            // 2. Lọc theo giá (tối đa)
-            if (maxPrice.HasValue && maxPrice > 0)
-            {
-                query = query.Where(p => p.Price <= maxPrice);
-            }
+            // =========================
+            // 2. Filter Price (MIN - MAX)
+            // =========================
+            if (minPrice.HasValue)
+                query = query.Where(p => p.Price >= minPrice.Value);
 
-            // 3. Sắp xếp
+            if (maxPrice.HasValue)
+                query = query.Where(p => p.Price <= maxPrice.Value);
+
+            // =========================
+            // 3. Sort
+            // =========================
             query = sortOrder switch
             {
                 "price_desc" => query.OrderByDescending(p => p.Price),
                 "price_asc" => query.OrderBy(p => p.Price),
-                _ => query.OrderByDescending(p => p.Id) // Mặc định mới nhất
+                _ => query.OrderByDescending(p => p.Id)
             };
 
-            // Truyền dữ liệu cho View bộ lọc
+            // =========================
+            // 4. ViewBag FILTER DATA
+            // =========================
+            var productList = await _context.Products.ToListAsync();
+
             ViewBag.Categories = await _context.Categories.ToListAsync();
-            ViewBag.MaxPrice = await _context.Products.MaxAsync(p => (decimal?)p.Price) ?? 5000000;
+
+            ViewBag.MinPrice = productList.Min(p => (decimal?)p.Price) ?? 0;
+            ViewBag.MaxPrice = productList.Max(p => (decimal?)p.Price) ?? 5000000;
+
             ViewBag.CurrentSort = sortOrder;
 
             return View(await query.ToListAsync());
@@ -80,9 +100,8 @@ namespace WebBanDoCauCa.Controllers
         }
 
         // =========================
-        // CREATE / EDIT / DELETE (Giữ nguyên logic của bạn)
+        // CREATE
         // =========================
-
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
@@ -103,24 +122,23 @@ namespace WebBanDoCauCa.Controllers
 
             product.ImageUrl = (product.ImageUrl ?? "").Trim();
 
-            // Xử lý Sale logic và UTC
-            if (product.IsOnSale)
-            {
-                if (product.SaleStartDate.HasValue) product.SaleStartDate = DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
-                if (product.SaleEndDate.HasValue) product.SaleEndDate = DateTime.SpecifyKind(product.SaleEndDate.Value, DateTimeKind.Utc);
-            }
-
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
 
+        // =========================
+        // EDIT
+        // =========================
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
+
             var product = await _context.Products.FindAsync(id);
             if (product == null) return NotFound();
+
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
             return View(product);
         }
@@ -131,6 +149,7 @@ namespace WebBanDoCauCa.Controllers
         public async Task<IActionResult> Edit(int id, Product product)
         {
             if (id != product.Id) return NotFound();
+
             if (ModelState.IsValid)
             {
                 try
@@ -140,20 +159,27 @@ namespace WebBanDoCauCa.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!_context.Products.Any(e => e.Id == id)) return NotFound();
+                    if (!_context.Products.Any(e => e.Id == id))
+                        return NotFound();
                     throw;
                 }
+
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
             return View(product);
         }
 
+        // =========================
+        // REVIEW
+        // =========================
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> AddReview(int productId, int rating, string comment)
         {
             var user = await _userManager.GetUserAsync(User);
+
             var review = new Review
             {
                 ProductId = productId,
@@ -162,8 +188,10 @@ namespace WebBanDoCauCa.Controllers
                 UserName = user?.UserName ?? "User",
                 CreatedAt = DateTime.UtcNow
             };
+
             _context.Reviews.Add(review);
             await _context.SaveChangesAsync();
+
             return Json(new { success = true });
         }
     }
