@@ -18,23 +18,40 @@
         {
             <div class="col-lg-4 col-md-6 mb-4">
                 <div class="card h-100 shadow-sm border-0 product-card">
-                    <div class="product-image-wrapper" style="height: 200px; overflow: hidden;">
+
+                    <div class="product-image-wrapper"
+                         style="height: 200px;
+                                    width: 100%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    background-color: #f8f9fa;
+                                    padding: 15px;
+                                    border-bottom: 1px solid #eee;">
+
                         <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/200" : item.ImageUrl)"
-                             class="card-img-top" alt="@item.Name" style="width: 100%; height: 100%; object-fit: cover;">
+                             class="card-img-top"
+                             alt="@item.Name"
+                             style="max-width: 100%;
+                                        max-height: 100%;
+                                        object-fit: contain;
+                                        transition: transform 0.3s ease;">
                     </div>
 
-                    <div class="card-body text-center">
-                        <h6 class="fw-bold">@item.Name</h6>
+                    <div class="card-body text-center d-flex flex-column">
+                        <h6 class="fw-bold mb-2">@item.Name</h6>
 
-                        @if (item.IsSaleActive)
-                        {
-                            <p class="text-decoration-line-through text-muted small">@item.Price.ToString("N0") VNĐ</p>
-                            <p class="text-danger fw-bold fs-5">@item.SalePrice.ToString("N0") VNĐ</p>
-                        }
-                        else
-                        {
-                            <p class="text-danger fw-bold fs-5">@item.Price.ToString("N0") VNĐ</p>
-                        }
+                        <div class="mb-3">
+                            @if (item.IsSaleActive)
+                            {
+                                <p class="text-decoration-line-through text-muted small mb-0">@item.Price.ToString("N0") VNĐ</p>
+                                <p class="text-danger fw-bold fs-5">@item.SalePrice.ToString("N0") VNĐ</p>
+                            }
+                            else
+                            {
+                                <p class="text-danger fw-bold fs-5">@item.Price.ToString("N0") VNĐ</p>
+                            }
+                        </div>
 
                         <div class="mt-auto d-grid gap-2">
                             <button class="btn btn-warning btn-add-to-cart" data-id="@item.Id">Thêm vào giỏ</button>
@@ -52,3 +69,10 @@
         }
     </div>
 </div>
+
+<style>
+    /* Hiệu ứng zoom nhẹ khi di chuột vào ảnh */
+    .product-card:hover img {
+        transform: scale(1.05);
+    }
+</style>
