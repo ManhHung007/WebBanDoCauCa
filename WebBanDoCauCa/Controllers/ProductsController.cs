@@ -26,18 +26,11 @@ namespace WebBanDoCauCa.Controllers
         // =========================
         public async Task<IActionResult> Index(int? categoryId, string brand, decimal? maxPrice, string sortOrder)
         {
-            var query = _context.Products
-                .Include(p => p.Category)
-                .AsQueryable();
+            var query = _context.Products.Include(p => p.Category).AsQueryable();
 
-            if (categoryId.HasValue)
-                query = query.Where(p => p.CategoryId == categoryId);
-
-            if (!string.IsNullOrWhiteSpace(brand))
-                query = query.Where(p => p.Brand == brand);
-
-            if (maxPrice.HasValue)
-                query = query.Where(p => p.Price <= maxPrice);
+            if (categoryId.HasValue) query = query.Where(p => p.CategoryId == categoryId);
+            if (!string.IsNullOrWhiteSpace(brand)) query = query.Where(p => p.Brand == brand);
+            if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice);
 
             query = sortOrder switch
             {
@@ -45,93 +38,32 @@ namespace WebBanDoCauCa.Controllers
                 _ => query.OrderBy(p => p.Price)
             };
 
-            ViewBag.Brands = await _context.Products
-                .Select(p => p.Brand)
-                .Distinct()
-                .ToListAsync();
-
-            ViewBag.Categories = new SelectList(
-                await _context.Categories.ToListAsync(),
-                "Id",
-                "Name",
-                categoryId
-            );
+            ViewBag.Brands = await _context.Products.Select(p => p.Brand).Distinct().ToListAsync();
+            ViewBag.Categories = new SelectList(await _context.Categories.ToListAsync(), "Id", "Name", categoryId);
 
             return View(await query.ToListAsync());
         }
 
         // =========================
-        // DETAILS
-        // =========================
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (product == null) return NotFound();
-
-            ViewBag.Reviews = await _context.Reviews
-                .Where(r => r.ProductId == id)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-            return View(product);
-        }
-
-        // =========================
-        // CREATE (GET)
-        // =========================
-        [Authorize(Roles = "Admin")]
-        public IActionResult Create()
-        {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
-            return View();
-        }
-
-        // =========================
-        // CREATE (POST)
+        // CREATE (POST) - TỐI ƯU HÓA
         // =========================
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(Product product)
         {
+            if (!ModelState.IsValid)
+            {
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                return View(product);
+            }
+
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-                    return View(product);
-                }
+                // Xử lý ImageUrl
+                product.ImageUrl = string.IsNullOrWhiteSpace(product.ImageUrl) ? null : product.ImageUrl.Trim();
 
-                // IMAGE SAFE
-                product.ImageUrl = string.IsNullOrWhiteSpace(product.ImageUrl)
-                    ? null
-                    : product.ImageUrl.Trim();
-
-                // CATEGORY CHECK
-                var categoryExists = await _context.Categories
-                    .AnyAsync(c => c.Id == product.CategoryId);
-
-                if (!categoryExists)
-                {
-                    ModelState.AddModelError("CategoryId", "Danh mục không tồn tại");
-                    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-                    return View(product);
-                }
-
-                // PRICE CHECK
-                if (product.Price <= 0)
-                {
-                    ModelState.AddModelError("Price", "Giá sản phẩm không hợp lệ");
-                    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-                    return View(product);
-                }
-
-                // SALE RESET + UTC FIX
+                // Logic Sale & UTC Fix
                 if (!product.IsOnSale)
                 {
                     product.DiscountPercent = 0;
@@ -142,7 +74,6 @@ namespace WebBanDoCauCa.Controllers
                 {
                     if (product.SaleStartDate.HasValue)
                         product.SaleStartDate = DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
-
                     if (product.SaleEndDate.HasValue)
                         product.SaleEndDate = DateTime.SpecifyKind(product.SaleEndDate.Value, DateTimeKind.Utc);
                 }
@@ -154,27 +85,14 @@ namespace WebBanDoCauCa.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+                ModelState.AddModelError("", "Lỗi hệ thống: " + (ex.InnerException?.Message ?? ex.Message));
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                return View(product);
             }
         }
 
         // =========================
-        // EDIT (GET)
-        // =========================
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) return NotFound();
-
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-            return View(product);
-        }
-
-        // =========================
-        // EDIT (POST)
+        // EDIT (POST) - TỐI ƯU HÓA
         // =========================
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -183,17 +101,15 @@ namespace WebBanDoCauCa.Controllers
         {
             if (id != product.Id) return NotFound();
 
+            if (!ModelState.IsValid)
+            {
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                return View(product);
+            }
+
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-                    return View(product);
-                }
-
-                product.ImageUrl = string.IsNullOrWhiteSpace(product.ImageUrl)
-                    ? null
-                    : product.ImageUrl.Trim();
+                product.ImageUrl = string.IsNullOrWhiteSpace(product.ImageUrl) ? null : product.ImageUrl.Trim();
 
                 if (!product.IsOnSale)
                 {
@@ -205,58 +121,46 @@ namespace WebBanDoCauCa.Controllers
                 {
                     if (product.SaleStartDate.HasValue)
                         product.SaleStartDate = DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
-
                     if (product.SaleEndDate.HasValue)
                         product.SaleEndDate = DateTime.SpecifyKind(product.SaleEndDate.Value, DateTimeKind.Utc);
                 }
 
                 _context.Update(product);
                 await _context.SaveChangesAsync();
-
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+                ModelState.AddModelError("", "Lỗi cập nhật: " + (ex.InnerException?.Message ?? ex.Message));
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                return View(product);
             }
         }
 
-        // =========================
-        // DELETE
-        // =========================
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(int? id)
+        // ... Các phương thức Details, Delete, AddReview giữ nguyên như cũ ...
+        public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
-
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
+            var product = await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
             if (product == null) return NotFound();
-
+            ViewBag.Reviews = await _context.Reviews.Where(r => r.ProductId == id).OrderByDescending(r => r.CreatedAt).ToListAsync();
             return View(product);
         }
+
+        [Authorize(Roles = "Admin")]
+        public IActionResult Create() { ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name"); return View(); }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int? id) { if (id == null) return NotFound(); var p = await _context.Products.FindAsync(id); if (p == null) return NotFound(); ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", p.CategoryId); return View(p); }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int? id) { if (id == null) return NotFound(); var p = await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id); if (p == null) return NotFound(); return View(p); }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var product = await _context.Products.FindAsync(id);
+        public async Task<IActionResult> DeleteConfirmed(int id) { var p = await _context.Products.FindAsync(id); if (p != null) { _context.Products.Remove(p); await _context.SaveChangesAsync(); } return RedirectToAction(nameof(Index)); }
 
-            if (product != null)
-            {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        // =========================
-        // REVIEW
-        // =========================
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> AddReview(int productId, int rating, string comment)
@@ -264,25 +168,12 @@ namespace WebBanDoCauCa.Controllers
             try
             {
                 var user = await _userManager.GetUserAsync(User);
-
-                var review = new Review
-                {
-                    ProductId = productId,
-                    Rating = rating,
-                    Comment = comment ?? "",
-                    UserName = user?.UserName ?? "User",
-                    CreatedAt = DateTime.UtcNow
-                };
-
+                var review = new Review { ProductId = productId, Rating = rating, Comment = comment ?? "", UserName = user?.UserName ?? "User", CreatedAt = DateTime.UtcNow };
                 _context.Reviews.Add(review);
                 await _context.SaveChangesAsync();
-
                 return Json(new { success = true });
             }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
     }
 }

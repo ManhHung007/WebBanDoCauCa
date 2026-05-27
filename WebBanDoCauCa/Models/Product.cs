@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebBanDoCauCa.Models
@@ -8,12 +10,14 @@ namespace WebBanDoCauCa.Models
         [Key]
         public int Id { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Tên sản phẩm không được để trống")]
         public string Name { get; set; } = string.Empty;
 
         public string? Description { get; set; }
 
+        [Required(ErrorMessage = "Giá sản phẩm là bắt buộc")]
         [Column(TypeName = "decimal(18,2)")]
+        [Range(0, double.MaxValue, ErrorMessage = "Giá không được âm")]
         public decimal Price { get; set; }
 
         public string? ImageUrl { get; set; }
@@ -27,8 +31,10 @@ namespace WebBanDoCauCa.Models
 
         public bool IsOnSale { get; set; } = false;
 
+        [Range(0, 100, ErrorMessage = "Phần trăm giảm giá từ 0-100")]
         public int DiscountPercent { get; set; } = 0;
 
+        // PostgreSQL yêu cầu các trường này tương thích với UTC
         public DateTime? SaleStartDate { get; set; }
 
         public DateTime? SaleEndDate { get; set; }
@@ -40,11 +46,9 @@ namespace WebBanDoCauCa.Models
         {
             get
             {
-                if (IsSaleActive)
-                {
-                    return Price - (Price * DiscountPercent / 100);
-                }
-                return Price;
+                return IsSaleActive
+                    ? Price - (Price * DiscountPercent / 100)
+                    : Price;
             }
         }
 
@@ -53,16 +57,17 @@ namespace WebBanDoCauCa.Models
         {
             get
             {
+                // Sử dụng UtcNow để so sánh chuẩn với Database
+                var now = DateTime.UtcNow;
                 return IsOnSale
                     && DiscountPercent > 0
                     && SaleStartDate.HasValue
                     && SaleEndDate.HasValue
-                    && SaleStartDate <= DateTime.Now
-                    && SaleEndDate >= DateTime.Now;
+                    && SaleStartDate.Value.ToUniversalTime() <= now
+                    && SaleEndDate.Value.ToUniversalTime() >= now;
             }
         }
 
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
-            = new List<OrderDetail>();
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     }
 }
