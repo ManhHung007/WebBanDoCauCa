@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WebBanDoCauCa.Models;
 
 namespace WebBanDoCauCa.Models
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    // Thêm IDataProtectionKeyContext để lưu key vào DB
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }
@@ -16,6 +18,9 @@ namespace WebBanDoCauCa.Models
         public DbSet<Order> Orders { get; set; } = null!;
         public DbSet<OrderDetail> OrderDetails { get; set; } = null!;
         public DbSet<Review> Reviews { get; set; } = null!;
+
+        // THÊM: bảng lưu Data Protection keys - fix lỗi key ring sau redeploy
+        public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,11 +43,8 @@ namespace WebBanDoCauCa.Models
 
             // =====================================================
             // 2. FIX DATETIME UTC CHO NEON/POSTGRESQL
-            // Tất cả các cột DateTime phải là "timestamp with time zone"
-            // KHÔNG dùng EnableLegacyTimestampBehavior
             // =====================================================
 
-            // Product: SaleStartDate, SaleEndDate
             modelBuilder.Entity<Product>()
                 .Property(p => p.SaleStartDate)
                 .HasColumnType("timestamp with time zone");
@@ -51,17 +53,14 @@ namespace WebBanDoCauCa.Models
                 .Property(p => p.SaleEndDate)
                 .HasColumnType("timestamp with time zone");
 
-            // Review: CreatedAt
             modelBuilder.Entity<Review>()
                 .Property(r => r.CreatedAt)
                 .HasColumnType("timestamp with time zone");
 
-            // Order: OrderDate (không phải CreatedAt)
             modelBuilder.Entity<Order>()
                 .Property(o => o.OrderDate)
                 .HasColumnType("timestamp with time zone");
 
-            // CartItem: DateCreated
             modelBuilder.Entity<CartItem>()
                 .Property(c => c.DateCreated)
                 .HasColumnType("timestamp with time zone");

@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.DataProtection;
 using WebBanDoCauCa.Models;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// ĐÃ XÓA EnableLegacyTimestampBehavior - đây là nguyên nhân gốc rễ
 
 // 1. DATABASE
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -15,7 +14,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
-// 2. IDENTITY
+// 2. DATA PROTECTION - lưu key vào DB để không mất sau mỗi lần redeploy
+// Fix lỗi: "The key was not found in the key ring"
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<ApplicationDbContext>();
+
+// 3. IDENTITY
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -27,7 +31,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// 3. SESSION
+// 4. SESSION
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -36,13 +40,13 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// 4. MVC + RAZOR
+// 5. MVC + RAZOR
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// 5. MIGRATION + SEED
+// 6. MIGRATION + SEED
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -58,14 +62,14 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// 6. MIDDLEWARE
+// 7. MIDDLEWARE
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-// FIX RENDER: phải đứng trước UseAuthentication
+// FIX RENDER: ForwardedHeaders phải đứng trước UseAuthentication
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
@@ -78,7 +82,7 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 7. ROUTES
+// 8. ROUTES
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Products}/{action=Index}/{id?}");
