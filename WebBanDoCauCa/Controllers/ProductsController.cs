@@ -22,7 +22,7 @@ namespace WebBanDoCauCa.Controllers
         }
 
         // =========================
-        // LIST PRODUCT
+        // INDEX
         // =========================
         public async Task<IActionResult> Index(int? categoryId, string brand, decimal? maxPrice, string sortOrder)
         {
@@ -50,6 +50,27 @@ namespace WebBanDoCauCa.Controllers
         }
 
         // =========================
+        // DETAILS
+        // =========================
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null) return NotFound();
+
+            ViewBag.Reviews = await _context.Reviews
+                .Where(r => r.ProductId == id)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            return View(product);
+        }
+
+        // =========================
         // CREATE (GET)
         // =========================
         [Authorize(Roles = "Admin")]
@@ -67,15 +88,13 @@ namespace WebBanDoCauCa.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(Product product)
         {
-            // ── DEBUG: in lỗi ModelState ra Render Logs ──
+            // DEBUG: in lỗi ModelState ra Render Logs
             if (!ModelState.IsValid)
             {
                 Console.WriteLine("=== [Create] ModelState INVALID ===");
                 foreach (var kvp in ModelState)
-                {
                     foreach (var err in kvp.Value.Errors)
-                        Console.WriteLine($"  Field '{kvp.Key}': {err.ErrorMessage}");
-                }
+                        Console.WriteLine($"  '{kvp.Key}': {err.ErrorMessage}");
 
                 ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
                 return View(product);
@@ -83,12 +102,12 @@ namespace WebBanDoCauCa.Controllers
 
             try
             {
-                // Fix ImageUrl: không để null, dùng empty string để tránh NOT NULL constraint
+                // Fix ImageUrl
                 product.ImageUrl = string.IsNullOrWhiteSpace(product.ImageUrl)
                     ? ""
                     : product.ImageUrl.Trim();
 
-                // Fix Sale logic
+                // Sale logic + UTC fix cho Neon/PostgreSQL
                 if (!product.IsOnSale)
                 {
                     product.DiscountPercent = 0;
@@ -97,22 +116,17 @@ namespace WebBanDoCauCa.Controllers
                 }
                 else
                 {
-                    // Fix UTC cho PostgreSQL/Neon: phải là DateTimeKind.Utc
-                    if (product.SaleStartDate.HasValue)
-                        product.SaleStartDate = product.SaleStartDate.Value.Kind == DateTimeKind.Utc
-                            ? product.SaleStartDate.Value
-                            : DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
+                    if (product.SaleStartDate.HasValue && product.SaleStartDate.Value.Kind != DateTimeKind.Utc)
+                        product.SaleStartDate = DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
 
-                    if (product.SaleEndDate.HasValue)
-                        product.SaleEndDate = product.SaleEndDate.Value.Kind == DateTimeKind.Utc
-                            ? product.SaleEndDate.Value
-                            : DateTime.SpecifyKind(product.SaleEndDate.Value, DateTimeKind.Utc);
+                    if (product.SaleEndDate.HasValue && product.SaleEndDate.Value.Kind != DateTimeKind.Utc)
+                        product.SaleEndDate = DateTime.SpecifyKind(product.SaleEndDate.Value, DateTimeKind.Utc);
                 }
 
                 _context.Products.Add(product);
                 await _context.SaveChangesAsync();
 
-                Console.WriteLine($"=== [Create] Product '{product.Name}' saved OK (Id={product.Id}) ===");
+                Console.WriteLine($"=== [Create] OK - '{product.Name}' Id={product.Id} ===");
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException dbEx)
@@ -156,15 +170,13 @@ namespace WebBanDoCauCa.Controllers
         {
             if (id != product.Id) return NotFound();
 
-            // ── DEBUG: in lỗi ModelState ra Render Logs ──
+            // DEBUG: in lỗi ModelState ra Render Logs
             if (!ModelState.IsValid)
             {
                 Console.WriteLine("=== [Edit] ModelState INVALID ===");
                 foreach (var kvp in ModelState)
-                {
                     foreach (var err in kvp.Value.Errors)
-                        Console.WriteLine($"  Field '{kvp.Key}': {err.ErrorMessage}");
-                }
+                        Console.WriteLine($"  '{kvp.Key}': {err.ErrorMessage}");
 
                 ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
                 return View(product);
@@ -184,21 +196,17 @@ namespace WebBanDoCauCa.Controllers
                 }
                 else
                 {
-                    if (product.SaleStartDate.HasValue)
-                        product.SaleStartDate = product.SaleStartDate.Value.Kind == DateTimeKind.Utc
-                            ? product.SaleStartDate.Value
-                            : DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
+                    if (product.SaleStartDate.HasValue && product.SaleStartDate.Value.Kind != DateTimeKind.Utc)
+                        product.SaleStartDate = DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
 
-                    if (product.SaleEndDate.HasValue)
-                        product.SaleEndDate = product.SaleEndDate.Value.Kind == DateTimeKind.Utc
-                            ? product.SaleEndDate.Value
-                            : DateTime.SpecifyKind(product.SaleEndDate.Value, DateTimeKind.Utc);
+                    if (product.SaleEndDate.HasValue && product.SaleEndDate.Value.Kind != DateTimeKind.Utc)
+                        product.SaleEndDate = DateTime.SpecifyKind(product.SaleEndDate.Value, DateTimeKind.Utc);
                 }
 
                 _context.Update(product);
                 await _context.SaveChangesAsync();
 
-                Console.WriteLine($"=== [Edit] Product Id={product.Id} updated OK ===");
+                Console.WriteLine($"=== [Edit] OK - Id={product.Id} ===");
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
@@ -220,27 +228,6 @@ namespace WebBanDoCauCa.Controllers
             }
 
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-            return View(product);
-        }
-
-        // =========================
-        // DETAILS
-        // =========================
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (product == null) return NotFound();
-
-            ViewBag.Reviews = await _context.Reviews
-                .Where(r => r.ProductId == id)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
             return View(product);
         }
 
@@ -274,7 +261,7 @@ namespace WebBanDoCauCa.Controllers
             {
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
-                Console.WriteLine($"=== [Delete] Product Id={id} deleted OK ===");
+                Console.WriteLine($"=== [Delete] OK - Id={id} ===");
             }
             return RedirectToAction(nameof(Index));
         }
