@@ -1,20 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using WebBanDoCauCa.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using WebBanDoCauCa.Models;
 
 namespace WebBanDoCauCa.Controllers
 {
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _context;
-        // ĐÃ SỬA: Chuyển từ ApplicationUser sang ApplicationUser
         private readonly UserManager<ApplicationUser> _userManager;
 
         public ProductsController(
@@ -26,171 +24,185 @@ namespace WebBanDoCauCa.Controllers
         }
 
         // ==========================================================
-        // KHU VỰC NGƯỜI DÙNG (PUBLIC)
+        // PUBLIC - LIST PRODUCTS
         // ==========================================================
-
         public async Task<IActionResult> Index(int? categoryId, string brand, decimal? maxPrice, string sortOrder)
         {
-            var productsQuery = _context.Products
+            var query = _context.Products
                 .Include(p => p.Category)
                 .AsQueryable();
 
             if (categoryId.HasValue)
             {
-                productsQuery = productsQuery.Where(p => p.CategoryId == categoryId);
-                var currentCategory = await _context.Categories.FindAsync(categoryId);
-                ViewData["CurrentCategory"] = currentCategory?.Name ?? "Sản phẩm";
-            }
-            else
-            {
-                ViewData["CurrentCategory"] = "Tất cả sản phẩm";
+                query = query.Where(p => p.CategoryId == categoryId);
             }
 
             if (!string.IsNullOrEmpty(brand))
             {
-                productsQuery = productsQuery.Where(p => p.Brand == brand);
+                query = query.Where(p => p.Brand == brand);
             }
 
             if (maxPrice.HasValue)
             {
-                productsQuery = productsQuery.Where(p => p.Price <= maxPrice);
+                query = query.Where(p => p.Price <= maxPrice);
             }
 
-            switch (sortOrder)
+            query = sortOrder switch
             {
-                case "price_desc":
-                    productsQuery = productsQuery.OrderByDescending(p => p.Price);
-                    break;
-                case "price_asc":
-                default:
-                    productsQuery = productsQuery.OrderBy(p => p.Price);
-                    break;
-            }
+                "price_desc" => query.OrderByDescending(p => p.Price),
+                _ => query.OrderBy(p => p.Price)
+            };
 
-            ViewBag.Brands = await _context.Products.Select(p => p.Brand).Distinct().ToListAsync();
-            ViewBag.MinPrice = _context.Products.Any() ? await _context.Products.MinAsync(p => p.Price) : 0;
-            ViewBag.MaxPrice = _context.Products.Any() ? await _context.Products.MaxAsync(p => p.Price) : 0;
-            ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name", categoryId);
+            ViewBag.Brands = await _context.Products
+                .Select(p => p.Brand)
+                .Distinct()
+                .ToListAsync();
 
-            return View(await productsQuery.ToListAsync());
+            ViewBag.Categories = new SelectList(await _context.Categories.ToListAsync(), "Id", "Name", categoryId);
+
+            return View(await query.ToListAsync());
         }
 
+        // ==========================================================
+        // DETAILS
+        // ==========================================================
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
             var product = await _context.Products
                 .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null) return NotFound();
 
             ViewBag.Reviews = await _context.Reviews
-                .Where(r => r.ProductId == product.Id)
+                .Where(r => r.ProductId == id)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
             return View(product);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> SearchSuggestions(string term)
-        {
-            if (string.IsNullOrWhiteSpace(term) || term.Length < 1)
-                return Json(new List<object>());
-
-            var suggestions = await _context.Products
-                .Where(p => p.Name.Contains(term))
-                .Select(p => new {
-                    id = p.Id,
-                    name = p.Name,
-                    price = p.Price.ToString("N0") + "đ"
-                })
-                .Take(5)
-                .ToListAsync();
-
-            return Json(suggestions);
-        }
-
         // ==========================================================
-        // KHU VỰC QUẢN TRỊ (ADMIN ONLY)
+        // CREATE (ADMIN)
         // ==========================================================
-
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
-            PrepareCategoryList();
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([Bind("Id,Name,Description,Price,ImageUrl,CategoryId,IsOnSale,DiscountPercent,SaleStartDate,SaleEndDate,Brand")] Product product)
+        public async Task<IActionResult> Create(Product product)
         {
-            if (ModelState.IsValid)
+            try
             {
+                if (!ModelState.IsValid)
+                {
+                    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                    return View(product);
+                }
+
+                // 🔥 FIX NULL IMAGE
+                product.ImageUrl ??= "";
+
+                // 🔥 CHECK CATEGORY EXISTS
+                var categoryExists = await _context.Categories
+                    .AnyAsync(c => c.Id == product.CategoryId);
+
+                if (!categoryExists)
+                {
+                    return Content("CategoryId không tồn tại trong database");
+                }
+
+                // SALE LOGIC
                 if (!product.IsOnSale)
                 {
                     product.DiscountPercent = 0;
                     product.SaleStartDate = null;
                     product.SaleEndDate = null;
                 }
-                _context.Add(product);
+
+                _context.Products.Add(product);
                 await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
-            PrepareCategoryList(product.CategoryId);
-            return View(product);
+            catch (Exception ex)
+            {
+                // 🔥 HIỆN LỖI THẬT TRÊN RENDER
+                return Content(ex.ToString());
+            }
         }
 
+        // ==========================================================
+        // EDIT
+        // ==========================================================
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
+
             var product = await _context.Products.FindAsync(id);
             if (product == null) return NotFound();
-            PrepareCategoryList(product.CategoryId);
+
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
             return View(product);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,Price,ImageUrl,CategoryId,IsOnSale,DiscountPercent,SaleStartDate,SaleEndDate,Brand")] Product product)
+        public async Task<IActionResult> Edit(int id, Product product)
         {
             if (id != product.Id) return NotFound();
 
-            if (ModelState.IsValid)
+            try
             {
-                try
+                if (!ModelState.IsValid)
                 {
-                    if (!product.IsOnSale)
-                    {
-                        product.DiscountPercent = 0;
-                        product.SaleStartDate = null;
-                        product.SaleEndDate = null;
-                    }
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
+                    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                    return View(product);
                 }
-                catch (DbUpdateConcurrencyException)
+
+                product.ImageUrl ??= "";
+
+                if (!product.IsOnSale)
                 {
-                    if (!ProductExists(product.Id)) return NotFound();
-                    throw;
+                    product.DiscountPercent = 0;
+                    product.SaleStartDate = null;
+                    product.SaleEndDate = null;
                 }
+
+                _context.Update(product);
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
-            PrepareCategoryList(product.CategoryId);
-            return View(product);
+            catch (Exception ex)
+            {
+                return Content(ex.ToString());
+            }
         }
 
+        // ==========================================================
+        // DELETE
+        // ==========================================================
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
-            var product = await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(m => m.Id == id);
+
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (product == null) return NotFound();
+
             return View(product);
         }
 
@@ -200,14 +212,19 @@ namespace WebBanDoCauCa.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var product = await _context.Products.FindAsync(id);
+
             if (product != null)
             {
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
             }
+
             return RedirectToAction(nameof(Index));
         }
 
+        // ==========================================================
+        // REVIEW
+        // ==========================================================
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> AddReview(int productId, int rating, string comment)
@@ -215,32 +232,25 @@ namespace WebBanDoCauCa.Controllers
             try
             {
                 var user = await _userManager.GetUserAsync(User);
-                Review review = new Review
+
+                var review = new Review
                 {
                     ProductId = productId,
                     Rating = rating,
-                    Comment = comment,
+                    Comment = comment ?? "",
                     UserName = user?.UserName ?? "User",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
+
                 _context.Reviews.Add(review);
                 await _context.SaveChangesAsync();
+
                 return Json(new { success = true });
             }
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message });
             }
-        }
-
-        private void PrepareCategoryList(int? selectedId = null)
-        {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", selectedId);
-        }
-
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.Id == id);
         }
     }
 }

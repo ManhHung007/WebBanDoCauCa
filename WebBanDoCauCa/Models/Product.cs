@@ -8,6 +8,7 @@ namespace WebBanDoCauCa.Models
         [Key]
         public int Id { get; set; }
 
+        [Required]
         public string Name { get; set; } = string.Empty;
 
         public string? Description { get; set; }
@@ -17,19 +18,12 @@ namespace WebBanDoCauCa.Models
 
         public string? ImageUrl { get; set; }
 
+        [Required]
         public int CategoryId { get; set; }
 
         public virtual Category? Category { get; set; }
 
-        // =========================
-        // SẢN PHẨM HOT
-        // =========================
-
         public bool IsHot { get; set; } = false;
-
-        // =========================
-        // KHUYẾN MÃI
-        // =========================
 
         public bool IsOnSale { get; set; } = false;
 
@@ -39,9 +33,7 @@ namespace WebBanDoCauCa.Models
 
         public DateTime? SaleEndDate { get; set; }
 
-        // =========================
-        // GIÁ SAU GIẢM
-        // =========================
+        public string? Brand { get; set; }
 
         [NotMapped]
         public decimal SalePrice
@@ -52,16 +44,9 @@ namespace WebBanDoCauCa.Models
                 {
                     return Price - (Price * DiscountPercent / 100);
                 }
-
                 return Price;
             }
         }
-
-        // =========================
-        // KIỂM TRA SALE CÒN HIỆU LỰC
-        // =========================
-
-        public string? Brand { get; set; }
 
         [NotMapped]
         public bool IsSaleActive
@@ -70,10 +55,14 @@ namespace WebBanDoCauCa.Models
             {
                 return IsOnSale
                     && DiscountPercent > 0
+                    && SaleStartDate.HasValue
+                    && SaleEndDate.HasValue
                     && SaleStartDate <= DateTime.Now
                     && SaleEndDate >= DateTime.Now;
             }
         }
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
+            = new List<OrderDetail>();
     }
 }
