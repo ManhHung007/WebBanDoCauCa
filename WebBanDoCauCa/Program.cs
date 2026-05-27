@@ -14,8 +14,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
-// 2. DATA PROTECTION - lưu key vào DB để không mất sau mỗi lần redeploy
-// Fix lỗi: "The key was not found in the key ring"
+// 2. DATA PROTECTION - lưu key vào DB
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<ApplicationDbContext>();
 
@@ -46,7 +45,8 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// 6. MIGRATION + SEED
+// 6. MIGRATION - chạy trước tất cả middleware
+// Tạo bảng DataProtectionKeys trước khi session/auth cần dùng
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -54,11 +54,13 @@ using (var scope = app.Services.CreateScope())
     {
         var db = services.GetRequiredService<ApplicationDbContext>();
         db.Database.Migrate();
+        Console.WriteLine("=== Migration OK ===");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "Database initialization error: {Message}", ex.Message);
+        Console.WriteLine($"=== Migration FAILED: {ex.Message} ===");
     }
 }
 
