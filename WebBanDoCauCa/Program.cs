@@ -4,14 +4,13 @@ using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- CẤU HÌNH DATABASE ---
+// 1. Cấu hình Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
-// --- CẤU HÌNH IDENTITY ---
+// 2. Cấu hình Identity
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = false;
@@ -22,10 +21,9 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// --- CẤU HÌNH SESSION ---
+// 3. Cấu hình Session
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
+builder.Services.AddSession(options => {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
@@ -36,7 +34,7 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// --- TỰ ĐỘNG CẬP NHẬT DATABASE & SEED DỮ LIỆU CƠ BẢN ---
+// 4. Khởi tạo Database và Dữ liệu mồi
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -44,10 +42,13 @@ using (var scope = app.Services.CreateScope())
     {
         var db = services.GetRequiredService<ApplicationDbContext>();
 
-        // 1. Áp dụng các Migration mới nhất lên Database
-        db.Database.Migrate();
+        // Tự động Migrate các thay đổi schema
+        if (db.Database.GetPendingMigrations().Any())
+        {
+            db.Database.Migrate();
+        }
 
-        // 2. TỰ ĐỘNG THÊM DANH MỤC NẾU TRỐNG (Khắc phục lỗi Dropdown)
+        // Seed dữ liệu nếu bảng Categories trống
         if (!db.Categories.Any())
         {
             db.Categories.AddRange(
@@ -63,11 +64,11 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Có lỗi xảy ra khi cập nhật Database.");
+        logger.LogError(ex, "Lỗi khi khởi tạo database: {Message}", ex.Message);
     }
 }
 
-// --- MIDDLEWARE ---
+// 5. Middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
