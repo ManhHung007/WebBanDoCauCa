@@ -7,9 +7,7 @@ namespace WebBanDoCauCa.Models
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
+            : base(options) { }
 
         public DbSet<Product> Products { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
@@ -22,12 +20,12 @@ namespace WebBanDoCauCa.Models
         {
             base.OnModelCreating(modelBuilder);
 
-            // 1. Cấu hình kiểu dữ liệu cho các thực thể để tránh xung đột Postgres/SQL Server
+            // 1. Cấu hình độ chính xác cho các cột kiểu Decimal
             modelBuilder.Entity<Order>().Property(o => o.TotalAmount).HasPrecision(18, 2);
             modelBuilder.Entity<OrderDetail>().Property(od => od.Price).HasPrecision(18, 2);
             modelBuilder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
 
-            // Cấu hình rõ ràng cho ApplicationUser
+            // 2. Cấu hình kiểu dữ liệu cho Postgres (Identity)
             modelBuilder.Entity<ApplicationUser>(entity =>
             {
                 entity.Property(u => u.EmailConfirmed).HasColumnType("boolean");
@@ -36,7 +34,7 @@ namespace WebBanDoCauCa.Models
                 entity.Property(u => u.LockoutEnabled).HasColumnType("boolean");
             });
 
-            // 2. Tự động chuyển đổi các cột string thành 'text' cho PostgreSQL
+            // 3. Tự động chuyển string sang 'text' cho PostgreSQL
             if (Database.IsNpgsql())
             {
                 foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -44,14 +42,23 @@ namespace WebBanDoCauCa.Models
                     foreach (var property in entityType.GetProperties())
                     {
                         if (property.ClrType == typeof(string))
-                        {
                             property.SetColumnType("text");
-                        }
                     }
                 }
             }
 
-            // 3. Seed dữ liệu Admin
+            // 4. SEED DỮ LIỆU CƠ BẢN (Categories & Products)
+            modelBuilder.Entity<Category>().HasData(
+                new Category { Id = 1, Name = "Cần câu" },
+                new Category { Id = 2, Name = "Máy câu" }
+            );
+
+            modelBuilder.Entity<Product>().HasData(
+                new Product { Id = 1, Name = "Cần câu Shimano", Price = 1500000, CategoryId = 1, Brand = "Shimano" },
+                new Product { Id = 2, Name = "Máy câu Daiwa", Price = 2000000, CategoryId = 2, Brand = "Daiwa" }
+            );
+
+            // 5. SEED DỮ LIỆU ADMIN & PHÂN QUYỀN
             string adminRoleId = "8d04dce2-969a-435d-bba4-df3f325983dc";
             string adminUserId = "b7237254-8c44-486a-85b4-7b4455589025";
 
@@ -70,7 +77,7 @@ namespace WebBanDoCauCa.Models
                 FullName = "Administrator",
                 Address = "Hanoi, Vietnam",
                 PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(null!, "Admin@123"),
-                SecurityStamp = Guid.NewGuid().ToString() // Cần thiết cho Identity
+                SecurityStamp = Guid.NewGuid().ToString()
             };
 
             modelBuilder.Entity<ApplicationUser>().HasData(adminUser);

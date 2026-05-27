@@ -4,10 +4,12 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace WebBanDoCauCa.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialPostgres : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -306,12 +308,30 @@ namespace WebBanDoCauCa.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "Address", "ConcurrencyStamp", "Email", "EmailConfirmed", "FullName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "b7237254-8c44-486a-85b4-7b4455589025", 0, "Hanoi, Vietnam", "5b11b856-df64-4c9a-a4f3-7a3d83062610", "admin@fishingpro.com", true, "Administrator", false, null, "ADMIN@FISHINGPRO.COM", "ADMIN@FISHINGPRO.COM", "AQAAAAIAAYagAAAAEOkDd66Ral/emVrwdpdA9ts8/c7mIlSAt1rt6Y+so+fb37YON9zAHT4Q1c+7Kd9X9w==", null, false, "a56f0338-ff91-49a5-bc74-92e0881ecb30", false, "admin@fishingpro.com" });
+                values: new object[] { "b7237254-8c44-486a-85b4-7b4455589025", 0, "Hanoi, Vietnam", "f8e05185-70ad-43f1-823d-58ab9e985d81", "admin@fishingpro.com", true, "Administrator", false, null, "ADMIN@FISHINGPRO.COM", "ADMIN@FISHINGPRO.COM", "AQAAAAIAAYagAAAAEMuBGYLlyBM3pW8XZgyUyDsSUd6oRgd03OaCHs33Y0zeGd0z1z/zT/gENQY3w/da3g==", null, false, "6f6c9e04-b38b-46d9-84f4-5713cebf1dca", false, "admin@fishingpro.com" });
+
+            migrationBuilder.InsertData(
+                table: "Categories",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Cần câu" },
+                    { 2, "Máy câu" }
+                });
 
             migrationBuilder.InsertData(
                 table: "AspNetUserRoles",
                 columns: new[] { "RoleId", "UserId" },
                 values: new object[] { "8d04dce2-969a-435d-bba4-df3f325983dc", "b7237254-8c44-486a-85b4-7b4455589025" });
+
+            migrationBuilder.InsertData(
+                table: "Products",
+                columns: new[] { "Id", "Brand", "CategoryId", "Description", "DiscountPercent", "ImageUrl", "IsHot", "IsOnSale", "Name", "Price", "SaleEndDate", "SaleStartDate" },
+                values: new object[,]
+                {
+                    { 1, "Shimano", 1, null, 0, null, false, false, "Cần câu Shimano", 1500000m, null, null },
+                    { 2, "Daiwa", 2, null, 0, null, false, false, "Máy câu Daiwa", 2000000m, null, null }
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",

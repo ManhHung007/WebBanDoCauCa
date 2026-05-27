@@ -12,8 +12,8 @@ using WebBanDoCauCa.Models;
 namespace WebBanDoCauCa.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260527044458_InitialPostgres")]
-    partial class InitialPostgres
+    [Migration("20260527053209_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -251,16 +251,16 @@ namespace WebBanDoCauCa.Migrations
                             Id = "b7237254-8c44-486a-85b4-7b4455589025",
                             AccessFailedCount = 0,
                             Address = "Hanoi, Vietnam",
-                            ConcurrencyStamp = "5b11b856-df64-4c9a-a4f3-7a3d83062610",
+                            ConcurrencyStamp = "f8e05185-70ad-43f1-823d-58ab9e985d81",
                             Email = "admin@fishingpro.com",
                             EmailConfirmed = true,
                             FullName = "Administrator",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@FISHINGPRO.COM",
                             NormalizedUserName = "ADMIN@FISHINGPRO.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEOkDd66Ral/emVrwdpdA9ts8/c7mIlSAt1rt6Y+so+fb37YON9zAHT4Q1c+7Kd9X9w==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMuBGYLlyBM3pW8XZgyUyDsSUd6oRgd03OaCHs33Y0zeGd0z1z/zT/gENQY3w/da3g==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "a56f0338-ff91-49a5-bc74-92e0881ecb30",
+                            SecurityStamp = "6f6c9e04-b38b-46d9-84f4-5713cebf1dca",
                             TwoFactorEnabled = false,
                             UserName = "admin@fishingpro.com"
                         });
@@ -308,6 +308,18 @@ namespace WebBanDoCauCa.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Cần câu"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Máy câu"
+                        });
                 });
 
             modelBuilder.Entity("WebBanDoCauCa.Models.Order", b =>
@@ -429,6 +441,30 @@ namespace WebBanDoCauCa.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Brand = "Shimano",
+                            CategoryId = 1,
+                            DiscountPercent = 0,
+                            IsHot = false,
+                            IsOnSale = false,
+                            Name = "Cần câu Shimano",
+                            Price = 1500000m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Brand = "Daiwa",
+                            CategoryId = 2,
+                            DiscountPercent = 0,
+                            IsHot = false,
+                            IsOnSale = false,
+                            Name = "Máy câu Daiwa",
+                            Price = 2000000m
+                        });
                 });
 
             modelBuilder.Entity("WebBanDoCauCa.Models.Review", b =>
