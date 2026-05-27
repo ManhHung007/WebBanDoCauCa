@@ -1,0 +1,439 @@
+﻿@model Product
+
+@{
+    ViewData["Title"] = "Chỉnh sửa sản phẩm";
+}
+
+<div class="container mt-4">
+
+    <div class="card shadow border-0">
+
+        <!-- HEADER -->
+        <div class="card-header bg-primary text-white">
+
+            <h4 class="mb-0 text-uppercase">
+                <i class="fa-solid fa-pen-to-square"></i>
+                Cập nhật thông tin sản phẩm
+            </h4>
+
+        </div>
+
+        <!-- BODY -->
+        <div class="card-body p-4">
+
+            <form asp-action="Edit">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger">
+                </div>
+
+                <input type="hidden" asp-for="Id" />
+
+                <div class="row">
+
+                    <!-- ẢNH -->
+                    <div class="col-md-4 text-center border-end">
+
+                        <label class="fw-bold mb-3 d-block">
+                            Hình ảnh hiện tại
+                        </label>
+
+                        <div class="position-relative d-inline-block">
+
+                            @if (Model.IsSaleActive)
+                            {
+                                <div class="sale-badge">
+                                    -@Model.DiscountPercent%
+                                </div>
+                            }
+
+                            <img src="@Model.ImageUrl"
+                                 id="imagePreview"
+                                 alt="Preview"
+                                 class="img-thumbnail shadow-sm mb-3 product-preview" />
+
+                        </div>
+
+                        <p class="small text-muted">
+                            Ảnh sẽ tự cập nhật khi nhập URL mới
+                        </p>
+
+                    </div>
+
+                    <!-- FORM -->
+                    <div class="col-md-8">
+
+                        <div class="row">
+
+                            <!-- TÊN -->
+                            <div class="col-md-12 mb-3">
+
+                                <label asp-for="Name"
+                                       class="control-label fw-bold">
+
+                                    Tên sản phẩm
+
+                                </label>
+
+                                <input asp-for="Name"
+                                       class="form-control"
+                                       placeholder="Nhập tên sản phẩm..." />
+
+                                <span asp-validation-for="Name"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                            <!-- DANH MỤC -->
+                            <div class="col-md-6 mb-3">
+
+                                <label asp-for="CategoryId"
+                                       class="control-label fw-bold">
+
+                                    Danh mục
+
+                                </label>
+
+                                <select asp-for="CategoryId"
+                                        class="form-select"
+                                        asp-items="ViewBag.CategoryId">
+
+                                    <option value="">
+                                        -- Chọn danh mục --
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="CategoryId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                            <!-- GIÁ -->
+                            <div class="col-md-6 mb-3">
+
+                                <label asp-for="Price"
+                                       class="control-label fw-bold">
+
+                                    Giá bán (VNĐ)
+
+                                </label>
+
+                                <input asp-for="Price"
+                                       class="form-control"
+                                       type="number" />
+
+                                <span asp-validation-for="Price"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                            <!-- URL ẢNH -->
+                            <div class="col-md-12 mb-3">
+
+                                <label asp-for="ImageUrl"
+                                       class="control-label fw-bold">
+
+                                    Đường dẫn ảnh (URL)
+
+                                </label>
+
+                                <input asp-for="ImageUrl"
+                                       class="form-control"
+                                       id="imageUrlInput"
+                                       placeholder="Nhập link ảnh..." />
+
+                                <span asp-validation-for="ImageUrl"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                            <!-- MÔ TẢ -->
+                            <div class="col-md-12 mb-3">
+
+                                <label asp-for="Description"
+                                       class="control-label fw-bold">
+
+                                    Mô tả sản phẩm
+
+                                </label>
+
+                                <textarea asp-for="Description"
+                                          class="form-control"
+                                          rows="4"></textarea>
+
+                                <span asp-validation-for="Description"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                            <!-- ================= KHUYẾN MÃI ================= -->
+
+                            <div class="col-md-12">
+
+                                <div class="card border-warning shadow-sm mt-2">
+
+                                    <div class="card-header bg-warning fw-bold text-dark">
+
+                                        <i class="fa-solid fa-tags"></i>
+                                        Thiết lập khuyến mãi
+
+                                    </div>
+
+                                    <div class="card-body">
+
+                                        <!-- BẬT/TẮT -->
+                                        <div class="form-check form-switch mb-3">
+
+                                            <input asp-for="IsOnSale"
+                                                   class="form-check-input"
+                                                   type="checkbox"
+                                                   id="saleSwitch">
+
+                                            <label class="form-check-label fw-bold"
+                                                   for="saleSwitch">
+
+                                                Áp dụng giảm giá cho sản phẩm
+
+                                            </label>
+
+                                        </div>
+
+                                        <!-- THÔNG TIN SALE -->
+                                        <div id="saleFields">
+
+                                            <!-- PHẦN TRĂM -->
+                                            <div class="form-group mb-3">
+
+                                                <label asp-for="DiscountPercent"
+                                                       class="fw-bold">
+
+                                                    Phần trăm giảm giá (%)
+
+                                                </label>
+
+                                                <input asp-for="DiscountPercent"
+                                                       class="form-control"
+                                                       type="number"
+                                                       min="0"
+                                                       max="100"
+                                                       placeholder="Ví dụ: 20" />
+
+                                                <span asp-validation-for="DiscountPercent"
+                                                      class="text-danger">
+                                                </span>
+
+                                            </div>
+
+                                            <!-- THỜI GIAN -->
+                                            <div class="row">
+
+                                                <!-- START -->
+                                                <div class="col-md-6">
+
+                                                    <div class="form-group mb-3">
+
+                                                        <label asp-for="SaleStartDate"
+                                                               class="fw-bold">
+
+                                                            Ngày bắt đầu
+
+                                                        </label>
+
+                                                        <input asp-for="SaleStartDate"
+                                                               class="form-control"
+                                                               type="datetime-local" />
+
+                                                        <span asp-validation-for="SaleStartDate"
+                                                              class="text-danger">
+                                                        </span>
+
+                                                    </div>
+
+                                                </div>
+
+                                                <!-- END -->
+                                                <div class="col-md-6">
+
+                                                    <div class="form-group mb-3">
+
+                                                        <label asp-for="SaleEndDate"
+                                                               class="fw-bold">
+
+                                                            Ngày kết thúc
+
+                                                        </label>
+
+                                                        <input asp-for="SaleEndDate"
+                                                               class="form-control"
+                                                               type="datetime-local" />
+
+                                                        <span asp-validation-for="SaleEndDate"
+                                                              class="text-danger">
+                                                        </span>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                            <!-- PREVIEW -->
+                                            @if (Model.IsSaleActive)
+                                            {
+                                                <div class="alert alert-success border-0 mt-2 mb-0">
+
+                                                    <i class="fa-solid fa-fire"></i>
+
+                                                    Giá sau giảm:
+
+                                                    <strong>
+                                                        @Model.SalePrice.ToString("N0") VNĐ
+                                                    </strong>
+
+                                                </div>
+                                            }
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <hr />
+                <div class="form-check mb-3">
+
+                    <input asp-for="IsHot"
+                           class="form-check-input" />
+
+                    <label asp-for="IsHot"
+                           class="form-check-label fw-bold">
+
+                        Sản phẩm HOT
+
+                    </label>
+
+                </div>
+                <!-- BUTTON -->
+                <div class="form-group mt-3 text-end">
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary me-2">
+
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Quay lại
+
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-primary fw-bold px-4">
+
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        LƯU THAY ĐỔI
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    .product-preview {
+        max-height: 280px;
+        object-fit: cover;
+        transition: 0.3s;
+    }
+
+        .product-preview:hover {
+            transform: scale(1.03);
+        }
+
+    .sale-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #dc3545;
+        color: white;
+        font-weight: bold;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        z-index: 10;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    #saleFields {
+        display: none;
+    }
+
+</style>
+
+@section Scripts {
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+
+        // PREVIEW IMAGE
+        document.getElementById('imageUrlInput')
+            .addEventListener('input', function () {
+
+                var url = this.value;
+
+                if (url) {
+                    document.getElementById('imagePreview').src = url;
+                }
+
+            });
+
+        // TOGGLE SALE
+        $(document).ready(function () {
+
+            function toggleSaleFields() {
+
+                if ($('#saleSwitch').is(':checked')) {
+
+                    $('#saleFields').slideDown();
+
+                }
+                else {
+
+                    $('#saleFields').slideUp();
+
+                }
+            }
+
+            toggleSaleFields();
+
+            $('#saleSwitch').change(function () {
+
+                toggleSaleFields();
+
+            });
+
+        });
+
+    </script>
+}

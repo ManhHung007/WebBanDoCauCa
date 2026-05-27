@@ -1,0 +1,550 @@
+﻿@model IEnumerable<WebBanDoCauCa.Models.Product>
+
+@{
+    ViewData["Title"] = "Trang Chủ - Fishing Pro";
+}
+
+<!-- SWIPER CSS -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+<!-- ================= HERO BANNER ================= -->
+
+<div class="p-5 mb-4 bg-light text-white shadow-sm border border-dark hero-banner">
+
+    <div class="container-fluid py-5 text-center">
+
+        <h1 class="display-5 fw-bold text-uppercase tracking-wider">
+            Chinh Phục Mọi Thử Thách
+        </h1>
+
+        <p class="fs-4 max-w-2xl mx-auto text-light">
+            Cung cấp cần câu, máy câu và phụ kiện chính hãng cho cần thủ chuyên nghiệp.
+        </p>
+
+        <a asp-controller="Products"
+           asp-action="Index"
+           class="btn btn-warning btn-lg fw-bold text-uppercase px-5 py-3 mt-3 rounded-0 border-2 border-dark shadow">
+
+            MUA SẮM NGAY
+
+        </a>
+
+    </div>
+
+</div>
+
+<!-- ================= HOT PRODUCT SLIDER ================= -->
+
+<div class="container mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h2 class="fw-bold text-uppercase m-0">
+
+            <i class="fa-solid fa-fire text-danger me-2"></i>
+            Sản phẩm HOT
+
+        </h2>
+
+        <a asp-controller="Products"
+           asp-action="Index"
+           class="btn btn-outline-dark fw-bold text-uppercase btn-sm">
+
+            Xem tất cả
+
+        </a>
+
+    </div>
+
+    <div class="swiper hotProductSwiper">
+
+        <div class="swiper-wrapper">
+
+            @foreach (var item in ViewBag.HotProducts)
+            {
+                <div class="swiper-slide">
+
+                    <div class="card hot-card border-0 shadow-sm h-100">
+
+                        <!-- IMAGE -->
+
+                        <div class="position-relative overflow-hidden">
+
+                            <img src="@item.ImageUrl"
+                                 class="card-img-top hot-image"
+                                 alt="@item.Name" />
+
+                            @if (item.IsSaleActive)
+                            {
+                                <div class="hot-sale-badge">
+
+                                    -@item.DiscountPercent%
+
+                                </div>
+                            }
+
+                        </div>
+
+                        <!-- BODY -->
+
+                        <div class="card-body text-center d-flex flex-column">
+
+                            <h6 class="fw-bold text-uppercase mb-2 text-truncate">
+                                @item.Name
+                            </h6>
+
+                            @if (item.IsSaleActive)
+                            {
+                                <div class="mb-3">
+
+                                    <span class="text-danger fw-bold fs-5">
+
+                                        @item.SalePrice.ToString("N0") VNĐ
+
+                                    </span>
+
+                                    <div class="text-muted text-decoration-line-through small">
+
+                                        @item.Price.ToString("N0") VNĐ
+
+                                    </div>
+
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-danger fw-bold fs-5 mb-3">
+
+                                    @item.Price.ToString("N0") VNĐ
+
+                                </p>
+                            }
+
+                            <a asp-controller="Products"
+                               asp-action="Details"
+                               asp-route-id="@item.Id"
+                               class="btn btn-dark mt-auto fw-bold">
+
+                                <i class="fa-solid fa-eye me-1"></i>
+                                Xem chi tiết
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+        <!-- BUTTON -->
+
+        <div class="swiper-button-next"></div>
+
+        <div class="swiper-button-prev"></div>
+
+        <!-- PAGINATION -->
+
+        <div class="swiper-pagination mt-3"></div>
+
+    </div>
+
+</div>
+
+<!-- ================= NEW PRODUCTS ================= -->
+
+<div class="container mb-5">
+
+    <div class="row align-items-center my-5 border-bottom border-dark pb-3">
+
+        <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+
+            <h2 class="fw-bold text-uppercase m-0 fs-3 tracking-wide">
+
+                <i class="fa-solid fa-fish text-dark me-2"></i>
+                Sản Phẩm Mới Nhất
+
+            </h2>
+
+        </div>
+
+        <div class="col-md-6 text-center text-md-end">
+
+            <a asp-controller="Orders"
+               asp-action="Index"
+               class="btn btn-warning fw-bold rounded-0 text-uppercase btn-sm border border-dark me-2 px-3 py-2 shadow-sm">
+
+                <i class="fa-solid fa-clipboard-list me-1"></i>
+                Mục đơn hàng
+
+            </a>
+
+            <a asp-controller="Products"
+               asp-action="Index"
+               class="btn btn-outline-dark fw-bold rounded-0 text-uppercase btn-sm px-3 py-2">
+
+                Xem Tất Cả
+                <i class="fa-solid fa-arrow-right ms-1"></i>
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        @foreach (var item in Model)
+        {
+            <div class="col-md-3 col-sm-6 mb-4">
+
+                <div class="card h-100 shadow-sm border border-dark rounded-0 product-card bg-white">
+
+                    <div class="position-relative overflow-hidden">
+
+                        <img src="@item.ImageUrl"
+                             class="card-img-top rounded-0 product-image"
+                             alt="@item.Name">
+
+                        @if (item.IsSaleActive)
+                        {
+                            <div class="product-sale-badge">
+
+                                -@item.DiscountPercent%
+
+                            </div>
+                        }
+
+                    </div>
+
+                    <div class="card-body text-center d-flex flex-column justify-content-between p-3">
+
+                        <h6 class="card-title fw-bold text-dark text-uppercase text-truncate mb-2">
+
+                            @item.Name
+
+                        </h6>
+
+                        <div>
+
+                            @if (item.IsSaleActive)
+                            {
+                                <div>
+
+                                    <span class="text-danger fw-bold fs-5">
+
+                                        @item.SalePrice.ToString("N0") VNĐ
+
+                                    </span>
+
+                                    <div class="text-muted text-decoration-line-through small">
+
+                                        @item.Price.ToString("N0") VNĐ
+
+                                    </div>
+
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-danger fw-bold mb-3">
+
+                                    @item.Price.ToString("N0") VNĐ
+
+                                </p>
+                            }
+
+                            <a asp-controller="Products"
+                               asp-action="Details"
+                               asp-route-id="@item.Id"
+                               class="btn btn-dark w-100 rounded-0 fw-bold text-uppercase py-2 btn-sm">
+
+                                <i class="fa-solid fa-magnifying-glass me-1"></i>
+                                Xem chi tiết
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+<!-- ================= FIXED PROMO BAR ================= -->
+
+<div class="fixed-bottom bg-dark text-white border-top border-warning shadow promo-bar">
+
+    <div class="container-fluid px-4 py-2">
+
+        <div class="row align-items-center justify-content-between">
+
+            <div class="col-12 col-md-8 text-center text-md-start mb-2 mb-md-0 d-flex align-items-center justify-content-center justify-content-md-start">
+
+                <span class="badge bg-danger text-uppercase rounded-0 me-2 px-2 py-1 border border-light fw-bold small">
+
+                    ƯU ĐÃI
+
+                </span>
+
+                <span class="fw-bold text-uppercase text-warning small tracking-wider me-1">
+
+                    Giảm ngay 10%
+
+                </span>
+
+                <span class="text-light small fw-medium d-none d-sm-inline">
+
+                    khi mua combo cần câu và máy câu chính hãng trong tháng này!
+
+                </span>
+
+            </div>
+
+            <div class="col-12 col-md-4 text-center text-md-end d-flex align-items-center justify-content-center justify-content-md-end gap-3">
+
+                <div class="small text-white-50 border-end border-secondary pe-3 d-none d-lg-block fw-semibold text-uppercase promo-text">
+
+                    <i class="fa-solid fa-shield-halved text-warning me-1"></i>
+                    Cam kết chính hãng
+
+                </div>
+
+                <div class="d-flex gap-3 fs-5">
+
+                    <a href="https://facebook.com"
+                       target="_blank"
+                       class="text-white footer-social-icon">
+
+                        <i class="fa-brands fa-facebook"></i>
+
+                    </a>
+
+                    <a href="https://youtube.com"
+                       target="_blank"
+                       class="text-white footer-social-icon">
+
+                        <i class="fa-brands fa-youtube"></i>
+
+                    </a>
+
+                    <a href="https://tiktok.com"
+                       target="_blank"
+                       class="text-white footer-social-icon">
+
+                        <i class="fa-brands fa-tiktok"></i>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= FOOTER ================= -->
+
+<footer class="bg-dark text-white-50 py-3 text-center border-top border-secondary footer-custom">
+
+    <div class="container">
+
+        <small class="fw-bold text-uppercase">
+
+            WEB BÁN ĐỒ CÂU CÁ - Chất lượng tạo nên uy tín - Đồng hành cùng mọi cần thủ.
+
+        </small>
+
+    </div>
+
+</footer>
+
+<!-- ================= STYLE ================= -->
+
+<style>
+
+    body {
+        padding-bottom: 80px !important;
+    }
+
+    .hero-banner {
+        background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=2070&auto=format&fit=crop');
+        background-size: cover;
+        background-position: center;
+    }
+
+    .footer-social-icon:hover {
+        color: #ffc107 !important;
+        transition: color 0.2s ease-in-out;
+    }
+
+    .product-image {
+        height: 220px;
+        object-fit: cover;
+        transition: 0.4s;
+    }
+
+    .product-card {
+        transition: 0.35s;
+    }
+
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15) !important;
+        }
+
+            .product-card:hover .product-image {
+                transform: scale(1.05);
+            }
+
+    .product-sale-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: #dc3545;
+        color: white;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    /* ================= HOT SLIDER ================= */
+
+    .hot-card {
+        border-radius: 18px;
+        overflow: hidden;
+        transition: 0.35s;
+        background: #fff;
+    }
+
+        .hot-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+    .hot-image {
+        height: 240px;
+        object-fit: cover;
+        transition: 0.4s;
+    }
+
+    .hot-card:hover .hot-image {
+        transform: scale(1.08);
+    }
+
+    .hot-sale-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: #dc3545;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: bold;
+        z-index: 2;
+    }
+
+    .swiper {
+        padding-bottom: 50px;
+    }
+
+    .swiper-button-next,
+    .swiper-button-prev {
+        color: #000;
+    }
+
+    .swiper-pagination-bullet-active {
+        background: #dc3545;
+    }
+
+    .promo-bar {
+        z-index: 9999;
+        min-height: 55px;
+        position: fixed !important;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+
+    .promo-text {
+        font-size: 11px;
+    }
+
+    .footer-custom {
+        margin-bottom: 55px;
+    }
+
+    @@media(max-width:768px) {
+
+        .hot-image {
+            height: 220px;
+        }
+    }
+
+</style>
+
+<!-- ================= SWIPER JS ================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+<script>
+
+    var swiper = new Swiper(".hotProductSwiper", {
+
+        slidesPerView: 4,
+        spaceBetween: 25,
+
+        loop: true,
+
+        grabCursor: true,
+
+        autoplay: {
+            delay: 3000,
+            disableOnInteraction: false,
+        },
+
+        navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
+        },
+
+        pagination: {
+            el: ".swiper-pagination",
+            clickable: true,
+        },
+
+        breakpoints: {
+
+            0: {
+                slidesPerView: 1
+            },
+
+            576: {
+                slidesPerView: 2
+            },
+
+            992: {
+                slidesPerView: 3
+            },
+
+            1200: {
+                slidesPerView: 4
+            }
+        }
+    });
+
+</script>

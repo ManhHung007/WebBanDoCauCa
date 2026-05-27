@@ -1,0 +1,520 @@
+﻿@model WebBanDoCauCa.Models.Product
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="container mt-5">
+
+    <!-- ================= PRODUCT DETAIL ================= -->
+
+    <div class="row bg-white p-4 shadow rounded-4 border product-detail-container">
+
+        <!-- ẢNH -->
+        <div class="col-md-5 text-center position-relative">
+
+            @if (Model.IsSaleActive)
+            {
+                <div class="sale-badge">
+                    -@Model.DiscountPercent%
+                </div>
+            }
+
+            <img src="@Model.ImageUrl"
+                 class="img-fluid rounded product-image"
+                 alt="@Model.Name">
+
+        </div>
+
+        <!-- THÔNG TIN -->
+        <div class="col-md-7 ps-md-5">
+
+            <!-- DANH MỤC -->
+            <div class="badge bg-info text-dark mb-2 px-3 py-2">
+                @Model.Category?.Name
+            </div>
+
+            <!-- TÊN -->
+            <h2 class="fw-bold text-dark mb-3">
+                @Model.Name
+            </h2>
+
+            <!-- GIÁ -->
+            @if (Model.IsSaleActive)
+            {
+                <div class="mb-4">
+
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+
+                        <span class="sale-price">
+                            @Model.SalePrice.ToString("N0") VNĐ
+                        </span>
+
+                        <span class="original-price">
+                            @Model.Price.ToString("N0") VNĐ
+                        </span>
+
+                    </div>
+
+                    <div class="mt-2">
+
+                        <span class="badge bg-danger px-3 py-2">
+                            Tiết kiệm @Model.DiscountPercent%
+                        </span>
+
+                        <span class="text-success small ms-2">
+
+                            <i class="fa-regular fa-clock"></i>
+
+                            Khuyến mãi đến:
+                            @Model.SaleEndDate?.ToString("dd/MM/yyyy")
+
+                        </span>
+
+                    </div>
+
+                </div>
+            }
+            else
+            {
+                <h3 class="text-danger fw-bold mb-4">
+                    @Model.Price.ToString("N0") VNĐ
+                </h3>
+            }
+
+            <!-- MÔ TẢ -->
+            <div class="bg-light p-4 rounded-3 mb-4 border">
+
+                <h6 class="fw-bold mb-3">
+                    <i class="fa-solid fa-circle-info text-primary"></i>
+                    Mô tả sản phẩm
+                </h6>
+
+                <p class="text-muted mb-0">
+                    @Model.Description
+                </p>
+
+            </div>
+
+            <!-- ƯU ĐÃI -->
+            @if (Model.IsSaleActive)
+            {
+                <div class="promo-box mb-4">
+
+                    <h6 class="fw-bold text-danger mb-3">
+                        <i class="fa-solid fa-fire"></i>
+                        Ưu đãi đặc biệt
+                    </h6>
+
+                    <ul class="mb-0">
+
+                        <li>Giảm trực tiếp @Model.DiscountPercent% khi mua ngay.</li>
+
+                        <li>Miễn phí giao hàng toàn quốc.</li>
+
+                        <li>Tặng kèm phụ kiện câu cá cho đơn hàng khuyến mãi.</li>
+
+                    </ul>
+
+                </div>
+            }
+
+            <hr />
+
+            <!-- ================= MUA HÀNG AJAX ================= -->
+
+            <div>
+
+                <input type="hidden"
+                       id="productId"
+                       value="@Model.Id" />
+
+                <!-- SỐ LƯỢNG -->
+                <div class="d-flex align-items-center mb-4 flex-wrap gap-3">
+
+                    <span class="fw-bold">
+                        Chọn số lượng:
+                    </span>
+
+                    <input type="number"
+                           id="quantity"
+                           value="1"
+                           min="1"
+                           class="form-control quantity-input">
+
+                </div>
+
+                <!-- BUTTON -->
+                <div class="d-flex gap-3 flex-wrap">
+
+                    <button type="button"
+                            id="btnBuyNow"
+                            class="btn btn-warning btn-lg px-5 fw-bold shadow buy-btn">
+
+                        <i class="fa-solid fa-cart-shopping me-2"></i>
+                        MUA NGAY
+
+                    </button>
+
+                    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit"
+                           asp-route-id="@Model.Id"
+                           class="btn btn-outline-secondary btn-lg">
+
+                            <i class="fa-solid fa-pen"></i>
+                            Chỉnh sửa
+
+                        </a>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================= REVIEW ================= -->
+
+    <div class="mt-5">
+
+        <div class="bg-white p-4 shadow rounded-4 border">
+
+            <h4 class="fw-bold mb-4">
+
+                <i class="fa-solid fa-star text-warning"></i>
+                Đánh giá sản phẩm
+
+            </h4>
+
+            <!-- HIỂN THỊ REVIEW -->
+            @if (ViewBag.Reviews != null)
+            {
+                @foreach (var review in ViewBag.Reviews)
+                {
+                    <div class="review-item mb-4">
+
+                        <div class="d-flex justify-content-between">
+
+                            <strong>@review.UserName</strong>
+
+                            <span class="text-warning">
+
+                                @for (int i = 0; i < review.Rating; i++)
+                                {
+                                    <i class="fa-solid fa-star"></i>
+                                }
+
+                            </span>
+
+                        </div>
+
+                        <div class="text-muted small mb-2">
+                            @review.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+
+                        <p class="mb-0">
+                            @review.Comment
+                        </p>
+
+                    </div>
+                }
+            }
+
+            <!-- FORM REVIEW -->
+
+            <div class="mt-4">
+
+                <h5 class="fw-bold mb-3">
+
+                    <i class="fa-solid fa-pen"></i>
+                    Viết đánh giá
+
+                </h5>
+
+                <div class="mb-3">
+
+                    <label class="fw-bold mb-2">
+                        Đánh giá sao
+                    </label>
+
+                    <div class="rating-stars fs-3 text-warning">
+
+                        <i class="fa-regular fa-star star" data-value="1"></i>
+                        <i class="fa-regular fa-star star" data-value="2"></i>
+                        <i class="fa-regular fa-star star" data-value="3"></i>
+                        <i class="fa-regular fa-star star" data-value="4"></i>
+                        <i class="fa-regular fa-star star" data-value="5"></i>
+
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <textarea class="form-control"
+                              id="reviewComment"
+                              rows="4"
+                              placeholder="Nhập đánh giá của bạn..."></textarea>
+
+                </div>
+
+                <button type="button"
+                        id="btnSubmitReview"
+                        class="btn btn-primary px-4">
+
+                    Gửi đánh giá
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    .product-detail-container {
+        overflow: hidden;
+    }
+
+    .product-image {
+        max-height: 450px;
+        object-fit: contain;
+        transition: 0.4s;
+    }
+
+        .product-image:hover {
+            transform: scale(1.05);
+        }
+
+    .sale-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #dc3545;
+        color: white;
+        font-weight: bold;
+        padding: 10px 15px;
+        border-radius: 12px;
+        font-size: 16px;
+        z-index: 10;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .sale-price {
+        color: #dc3545;
+        font-size: 34px;
+        font-weight: bold;
+    }
+
+    .original-price {
+        color: #999;
+        text-decoration: line-through;
+        font-size: 20px;
+    }
+
+    .promo-box {
+        background: #fff3cd;
+        border: 1px solid #ffe69c;
+        border-radius: 15px;
+        padding: 18px;
+    }
+
+        .promo-box ul {
+            padding-left: 20px;
+        }
+
+        .promo-box li {
+            margin-bottom: 8px;
+        }
+
+    .quantity-input {
+        width: 120px;
+    }
+
+    .buy-btn {
+        transition: 0.3s;
+    }
+
+        .buy-btn:hover {
+            transform: translateY(-3px);
+        }
+
+    .review-item {
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .rating-stars i {
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .rating-stars i:hover {
+            transform: scale(1.2);
+        }
+
+</style>
+
+@section Scripts {
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+
+            // =========================
+            // ADD TO CART
+            // =========================
+
+            $('#btnBuyNow').click(function () {
+
+                let productId = $('#productId').val();
+
+                let quantity = $('#quantity').val();
+
+                $.ajax({
+
+                    url: '/Cart/AddToCart',
+
+                    type: 'POST',
+
+                    data: {
+                        productId: productId,
+                        quantity: quantity
+                    },
+
+                    success: function (response) {
+
+                        if (response.success) {
+
+                            $('#cart-count').text(response.newCount);
+
+                            alert('Đã thêm sản phẩm vào giỏ hàng!');
+
+                        }
+                        else {
+
+                            alert(response.message);
+
+                        }
+
+                    },
+
+                    error: function () {
+
+                        alert('Không thể kết nối máy chủ.');
+
+                    }
+
+                });
+
+            });
+
+            // =========================
+            // REVIEW STAR
+            // =========================
+
+            let selectedRating = 0;
+
+            $('.star').click(function () {
+
+                selectedRating = $(this).data('value');
+
+                $('.star')
+                    .removeClass('fa-solid')
+                    .addClass('fa-regular');
+
+                $('.star').each(function () {
+
+                    if ($(this).data('value') <= selectedRating) {
+
+                        $(this)
+                            .removeClass('fa-regular')
+                            .addClass('fa-solid');
+
+                    }
+
+                });
+
+            });
+
+            // =========================
+            // SUBMIT REVIEW
+            // =========================
+
+            $('#btnSubmitReview').click(function () {
+
+                let comment = $('#reviewComment').val();
+
+                if (selectedRating == 0) {
+
+                    alert('Vui lòng chọn số sao!');
+
+                    return;
+
+                }
+
+                if (comment.trim() == '') {
+
+                    alert('Vui lòng nhập nội dung đánh giá!');
+
+                    return;
+
+                }
+
+                $.ajax({
+
+                    url: '/Products/AddReview',
+
+                    type: 'POST',
+
+                    data: {
+
+                        productId: $('#productId').val(),
+
+                        rating: selectedRating,
+
+                        comment: comment
+
+                    },
+
+                    success: function (response) {
+
+                        if (response.success) {
+
+                            alert('Đánh giá đã được gửi!');
+
+                            location.reload();
+
+                        }
+                        else {
+
+                            alert(response.message);
+
+                        }
+
+                    },
+
+                    error: function () {
+
+                        alert('Không thể gửi đánh giá.');
+
+                    }
+
+                });
+
+            });
+
+        });
+
+    </script>
+
+}

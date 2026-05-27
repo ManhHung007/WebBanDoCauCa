@@ -1,0 +1,38 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        @* 1. THÔNG TIN NGƯỜI DÙNG *@
+        <li class="nav-item">
+            <a class="nav-link text-white" asp-area="Identity" asp-page="/Account/Manage/Index" title="Quản lý tài khoản">
+                <i class="fa-solid fa-user-circle"></i> Chào @User.Identity?.Name!
+            </a>
+        </li>
+
+        @* 2. NÚT ĐĂNG XUẤT *@
+        <li class="nav-item">
+            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="nav-link btn btn-link text-white border-0">
+                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                </button>
+            </form>
+        </li>
+    }
+    else
+    {
+        @* 3. CHƯA ĐĂNG NHẬP *@
+        <li class="nav-item">
+            <a class="nav-link text-white" asp-area="Identity" asp-page="/Account/Register">
+                <i class="fa-solid fa-user-plus"></i> Đăng ký
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white" asp-area="Identity" asp-page="/Account/Login">
+                <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
+            </a>
+        </li>
+    }
+</ul>

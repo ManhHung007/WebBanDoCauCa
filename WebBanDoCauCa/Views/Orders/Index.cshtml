@@ -1,0 +1,40 @@
+﻿@model IEnumerable<WebBanDoCauCa.Models.Order>
+
+<h2>Quản lý đơn hàng (Admin)</h2>
+<table class="table table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>Khách hàng</th>
+            <th>Ngày đặt</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.CustomerName</td>
+                <td>@item.OrderDate.ToString("dd/MM/yyyy")</td>
+                <td>
+                    <span class="badge @(item.Status == "Pending" ? "bg-warning text-dark" :
+                                                                  item.Status == "Đang giao" ? "bg-info" :
+                                                                  item.Status == "Đã giao" ? "bg-success" : "bg-danger")">
+                    @item.Status
+                </span>
+            </td>
+            <td>
+                <form asp-action="UpdateStatus" method="post">
+                    <input type="hidden" name="id" value="@item.Id" />
+                    <select name="status" onchange="this.form.submit()" class="form-select form-select-sm">
+                        <option value="Pending" selected="@(item.Status == "Pending")">Pending</option>
+                        <option value="Đang giao" selected="@(item.Status == "Đang giao")">Đang giao</option>
+                        <option value="Đã giao" selected="@(item.Status == "Đã giao")">Đã giao</option>
+                        <option value="Đã hủy" selected="@(item.Status == "Đã hủy")">Đã hủy</option>
+                    </select>
+                </form>
+            </td>
+        </tr>
+                }
+    </tbody>
+</table>

@@ -1,0 +1,324 @@
+﻿@model Product
+
+@{
+    ViewData["Title"] = "Xóa sản phẩm";
+}
+
+<div class="container mt-5 mb-5">
+
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+
+        <!-- HEADER -->
+
+        <div class="delete-header p-4 text-white">
+
+            <h3 class="fw-bold mb-1">
+                <i class="fa-solid fa-trash-can"></i>
+                Xác nhận xóa sản phẩm
+            </h3>
+
+            <p class="mb-0 opacity-75">
+                Kiểm tra kỹ thông tin trước khi thực hiện thao tác.
+            </p>
+
+        </div>
+
+        <!-- BODY -->
+
+        <div class="card-body p-4 p-lg-5">
+
+            <!-- ALERT -->
+
+            <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-5">
+
+                <div class="d-flex align-items-start gap-3">
+
+                    <div class="alert-icon">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+
+                    <div>
+
+                        <h5 class="fw-bold mb-2">
+                            Bạn có chắc chắn muốn xóa sản phẩm này?
+                        </h5>
+
+                        <p class="mb-0">
+                            Sau khi xóa, dữ liệu sản phẩm sẽ không thể khôi phục lại.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="row g-5 align-items-center">
+
+                <!-- IMAGE -->
+
+                <div class="col-lg-4 text-center">
+
+                    <div class="product-image-wrapper">
+
+                        <img src="@Model.ImageUrl"
+                             alt="@Model.Name"
+                             class="img-fluid product-image" />
+
+                        @if (Model.IsSaleActive)
+                        {
+                            <div class="sale-badge">
+                                -@Model.DiscountPercent%
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+                <!-- INFO -->
+
+                <div class="col-lg-8">
+
+                    <div class="info-box">
+
+                        <div class="info-row">
+                            <span class="info-label">
+                                Tên sản phẩm
+                            </span>
+
+                            <span class="info-value fw-bold">
+                                @Model.Name
+                            </span>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-label">
+                                Danh mục
+                            </span>
+
+                            <span class="info-value">
+                                @Model.Category?.Name
+                            </span>
+                        </div>
+
+                        <div class="info-row">
+
+                            <span class="info-label">
+                                Giá bán
+                            </span>
+
+                            <div class="info-value">
+
+                                @if (Model.IsSaleActive)
+                                {
+                                    <div>
+
+                                        <span class="sale-price">
+                                            @Model.SalePrice.ToString("N0") VNĐ
+                                        </span>
+
+                                        <span class="old-price">
+                                            @Model.Price.ToString("N0") VNĐ
+                                        </span>
+
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="normal-price">
+                                        @Model.Price.ToString("N0") VNĐ
+                                    </span>
+                                }
+
+                            </div>
+
+                        </div>
+
+                        @if (Model.IsSaleActive)
+                        {
+                            <div class="info-row">
+
+                                <span class="info-label">
+                                    Khuyến mãi
+                                </span>
+
+                                <span class="info-value text-success">
+
+                                    <i class="fa-regular fa-clock"></i>
+
+                                    @Model.SaleStartDate?.ToString("dd/MM/yyyy")
+                                    -
+
+                                    @Model.SaleEndDate?.ToString("dd/MM/yyyy")
+
+                                </span>
+
+                            </div>
+                        }
+
+                        <div class="info-row align-items-start">
+
+                            <span class="info-label">
+                                Mô tả
+                            </span>
+
+                            <span class="info-value text-muted">
+                                @Model.Description
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <!-- BUTTON -->
+
+                    <form asp-action="Delete">
+
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="d-flex flex-wrap gap-3">
+
+                            <button type="submit"
+                                    class="btn btn-danger btn-lg px-4 fw-bold delete-btn">
+
+                                <i class="fa-solid fa-trash"></i>
+                                XÓA SẢN PHẨM
+
+                            </button>
+
+                            <a asp-action="Index"
+                               class="btn btn-outline-secondary btn-lg px-4">
+
+                                <i class="fa-solid fa-arrow-left"></i>
+                                Quay lại
+
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    .delete-header {
+        background: linear-gradient(135deg, #c62828, #e53935);
+    }
+
+    .alert-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(220,53,69,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #dc3545;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .product-image-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .product-image {
+        max-height: 340px;
+        object-fit: contain;
+        border-radius: 20px;
+        background: #fff;
+        padding: 15px;
+        border: 1px solid #eee;
+        transition: 0.4s;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+        .product-image:hover {
+            transform: scale(1.04);
+        }
+
+    .sale-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: #dc3545;
+        color: white;
+        font-weight: bold;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .info-box {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .info-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        border-bottom: 1px dashed #ddd;
+        padding-bottom: 12px;
+    }
+
+    .info-label {
+        width: 160px;
+        font-weight: 700;
+        color: #555;
+    }
+
+    .info-value {
+        flex: 1;
+    }
+
+    .sale-price {
+        color: #dc3545;
+        font-size: 26px;
+        font-weight: bold;
+    }
+
+    .old-price {
+        color: #999;
+        text-decoration: line-through;
+        margin-left: 10px;
+    }
+
+    .normal-price {
+        color: #dc3545;
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .delete-btn {
+        transition: 0.3s;
+    }
+
+        .delete-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(220,53,69,0.3);
+        }
+
+    @@media(max-width:768px) {
+
+        .info-label {
+            width: 100%;
+        }
+    }
+
+</style>

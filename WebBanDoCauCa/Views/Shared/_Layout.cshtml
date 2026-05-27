@@ -1,0 +1,157 @@
+﻿@using Microsoft.EntityFrameworkCore
+@inject WebBanDoCauCa.Models.ApplicationDbContext DbContext
+@{
+    var initialCartCount = DbContext.CartItems.Sum(c => c.Quantity);
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Đồ Câu Fishing Pro</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/WebBanDoCauCa.styles.css" asp-append-version="true" />
+
+    <style>
+        html, body {
+            height: auto;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+        }
+
+        .wrapper {
+            flex: 1 0 auto;
+        }
+
+        .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+            .nav-link:hover {
+                color: #ffc107 !important;
+                transform: translateY(-1px);
+            }
+
+        footer {
+            background: #212529;
+            color: #adb5bd;
+            padding: 2rem 0;
+            flex-shrink: 0;
+            margin-top: 3rem;
+        }
+
+        .search-box {
+            width: 250px;
+        }
+
+        #suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            width: 100%;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom mb-3 shadow-lg">
+                <div class="container">
+                    <a class="navbar-brand fw-bold text-uppercase" asp-controller="Home" asp-action="Index">
+                        <i class="fa-solid fa-fish"></i> 🎣 Fishing Pro
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                        <ul class="navbar-nav flex-grow-1">
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i> Trang chủ</a>
+                            </li>
+                            <li class="nav-item search-box position-relative ms-3">
+                                <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="Tìm sản phẩm..." autocomplete="off" />
+                                <div id="suggestions" class="dropdown-menu shadow"></div>
+                            </li>
+
+                            <li class="nav-item dropdown ms-3">
+                                <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown"><i class="fa-solid fa-store"></i> Sản phẩm</a>
+                                <ul class="dropdown-menu dropdown-menu-dark shadow">
+                                    <li><a class="dropdown-item" asp-controller="Products" asp-action="Index">Tất cả sản phẩm</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-controller="Products" asp-action="Index" asp-route-categoryId="1">Cần câu</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Products" asp-action="Index" asp-route-categoryId="2">Máy câu</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Products" asp-action="Index" asp-route-categoryId="3">Dây câu</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Products" asp-action="Index" asp-route-categoryId="4">Lưỡi - Phao - Mồi</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Products" asp-action="Index" asp-route-categoryId="5">Phụ kiện</a></li>
+                                </ul>
+                            </li>
+
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <li class="nav-item dropdown ms-3">
+                                        <a class="nav-link dropdown-toggle text-warning" href="#" data-bs-toggle="dropdown">
+                                            <i class="fa-solid fa-user-shield"></i> Quản trị
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-dark shadow">
+                                            <li><a class="dropdown-item" asp-controller="Products" asp-action="Index"><i class="fa-solid fa-box"></i> Quản lý sản phẩm</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Customers" asp-action="Index"><i class="fa-solid fa-users"></i> Khách hàng</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Orders" asp-action="Index"><i class="fa-solid fa-receipt"></i> Quản lý đơn hàng</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" asp-controller="Orders" asp-action="Statistics"><i class="fa-solid fa-chart-line"></i> Doanh thu</a></li>
+                                        </ul>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="nav-item ms-3">
+                                        <a class="nav-link text-white" asp-controller="Orders" asp-action="MyOrders">
+                                            <i class="fa-solid fa-list-check"></i> Đơn hàng của tôi
+                                        </a>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                        <ul class="navbar-nav align-items-center">
+                            <li class="nav-item me-3">
+                                <a class="nav-link btn btn-outline-warning text-white px-3 py-1" asp-controller="Cart" asp-action="Index">
+                                    <i class="fa-solid fa-cart-shopping"></i> Giỏ hàng
+                                    <span id="cart-count" class="badge bg-danger rounded-pill">@initialCartCount</span>
+                                </a>
+                            </li>
+                            <partial name="_LoginPartial" />
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <main role="main" class="container pb-5">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

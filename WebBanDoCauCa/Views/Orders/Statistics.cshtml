@@ -1,0 +1,50 @@
+﻿@model IEnumerable<WebBanDoCauCa.Controllers.RevenueViewModel>
+
+@{
+    ViewData["Title"] = "Thống kê doanh thu";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary fw-bold">
+        <i class="fa-solid fa-chart-line"></i> Thống kê doanh thu theo tháng
+    </h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Tháng</th>
+                            <th>Năm</th>
+                            <th class="text-end">Tổng doanh thu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Month</td>
+                                <td>@item.Year</td>
+                                <td class="text-end fw-bold text-success">@item.TotalRevenue.ToString("N0") đ</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-info mb-0">
+                    Chưa có dữ liệu doanh thu (đơn hàng "Đã giao" hiện đang trống).
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách đơn hàng
+        </a>
+    </div>
+</div>

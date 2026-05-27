@@ -1,0 +1,24 @@
+﻿@model WebBanDoCauCa.Models.ApplicationUser
+
+@{
+    ViewData["Title"] = "Chi tiết khách hàng";
+}
+
+<div class="container mt-4">
+    <h2>Chi tiết khách hàng</h2>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">Họ tên</dt>
+        <dd class="col-sm-10">@(Model.FullName ?? "Chưa cập nhật")</dd>
+
+        <dt class="col-sm-2">Email</dt>
+        <dd class="col-sm-10">@Model.Email</dd>
+
+        <dt class="col-sm-2">Địa chỉ</dt>
+        <dd class="col-sm-10">@(Model.Address ?? "Chưa cập nhật")</dd>
+    </dl>
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Sửa</a> |
+        <a asp-action="Index">Quay lại danh sách</a>
+    </div>
+</div>

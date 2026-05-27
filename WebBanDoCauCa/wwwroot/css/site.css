@@ -1,0 +1,25 @@
+﻿/* Hiệu ứng Background cho toàn trang */
+body {
+    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop');
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+/* Biến bảng (Table) thành dạng Card sạch sẽ hơn */
+.table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Làm đẹp cho các nút bấm */
+.btn {
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}

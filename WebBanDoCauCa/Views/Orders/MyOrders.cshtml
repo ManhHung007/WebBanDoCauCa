@@ -1,0 +1,58 @@
+﻿@model IEnumerable<WebBanDoCauCa.Models.Order>
+
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+}
+
+<div class="container mt-4">
+    <h2>Đơn hàng của tôi</h2>
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Ngày đặt</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.OrderDate.ToString("dd/MM/yyyy")</td>
+                    <td>@item.TotalAmount.ToString("N0") đ</td>
+                    <td>
+                        <span class="badge @(item.Status == "Pending" ? "bg-warning text-dark" :
+                                                                          item.Status == "Đang giao" ? "bg-info" :
+                                                                          item.Status == "Đã giao" ? "bg-success" : "bg-danger")">
+                        @item.Status
+                    </span>
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        @if (item.Status == "Pending")
+                            {
+                                <form asp-controller="Orders" asp-action="CancelOrder" asp-route-id="@item.Id" method="post"
+                                      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn này?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger btn-sm">Hủy đơn</button>
+                                </form>
+                            }
+
+                            @if (item.Status == "Đang giao")
+                            {
+                                <form asp-controller="Orders" asp-action="ConfirmReceived" asp-route-id="@item.Id" method="post"
+                                      onsubmit="return confirm('Bạn xác nhận đã nhận được hàng?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-success btn-sm">Đã nhận hàng</button>
+                                </form>
+                            }
+
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">Chi tiết</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

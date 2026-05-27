@@ -1,0 +1,343 @@
+﻿@model Product
+
+@{
+    ViewData["Title"] = "Thêm sản phẩm mới";
+}
+
+<div class="container mt-4">
+    <div class="card shadow border-0">
+
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0 text-uppercase">
+                <i class="fa-solid fa-plus-circle"></i>
+                Thêm sản phẩm mới
+            </h4>
+        </div>
+
+        <div class="card-body p-4">
+
+            <form asp-action="Create">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger">
+                </div>
+
+                <div class="row">
+
+                    <!-- CỘT TRÁI -->
+                    <div class="col-md-6">
+
+                        <!-- TÊN -->
+                        <div class="form-group mb-3">
+
+                            <label asp-for="Name"
+                                   class="control-label fw-bold">
+
+                                Tên sản phẩm
+                            </label>
+
+                            <input asp-for="Name"
+                                   class="form-control"
+                                   placeholder="Nhập tên sản phẩm..." />
+
+                            <span asp-validation-for="Name"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <!-- DANH MỤC -->
+                        <div class="form-group mb-3">
+
+                            <label asp-for="CategoryId"
+                                   class="control-label fw-bold">
+
+                                Danh mục sản phẩm
+                            </label>
+
+                            <select asp-for="CategoryId"
+                                    class="form-select"
+                                    asp-items="ViewBag.CategoryId">
+
+                                <option value="">
+                                    -- Chọn loại đồ câu --
+                                </option>
+
+                            </select>
+
+                            <span asp-validation-for="CategoryId"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <!-- GIÁ -->
+                        <div class="form-group mb-3">
+
+                            <label asp-for="Price"
+                                   class="control-label fw-bold">
+
+                                Giá bán (VNĐ)
+                            </label>
+
+                            <input asp-for="Price"
+                                   class="form-control"
+                                   type="number"
+                                   placeholder="Ví dụ: 500000" />
+
+                            <span asp-validation-for="Price"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <!-- ================= KHUYẾN MÃI ================= -->
+
+                        <div class="card border-warning shadow-sm mb-3">
+
+                            <div class="card-header bg-warning fw-bold text-dark">
+                                <i class="fa-solid fa-tags"></i>
+                                Thiết lập khuyến mãi
+                            </div>
+
+                            <div class="card-body">
+
+                                <!-- BẬT/TẮT SALE -->
+                                <div class="form-check form-switch mb-3">
+
+                                    <input asp-for="IsOnSale"
+                                           class="form-check-input"
+                                           type="checkbox"
+                                           id="saleSwitch">
+
+                                    <label class="form-check-label fw-bold"
+                                           for="saleSwitch">
+
+                                        Áp dụng giảm giá cho sản phẩm
+
+                                    </label>
+
+                                </div>
+
+                                <!-- PHẦN THÔNG TIN SALE -->
+                                <div id="saleFields">
+
+                                    <!-- PHẦN TRĂM -->
+                                    <div class="form-group mb-3">
+
+                                        <label asp-for="DiscountPercent"
+                                               class="fw-bold">
+
+                                            Phần trăm giảm giá (%)
+
+                                        </label>
+
+                                        <input asp-for="DiscountPercent"
+                                               class="form-control"
+                                               type="number"
+                                               min="0"
+                                               max="100"
+                                               placeholder="Ví dụ: 20" />
+
+                                        <span asp-validation-for="DiscountPercent"
+                                              class="text-danger">
+                                        </span>
+
+                                    </div>
+
+                                    <!-- NGÀY -->
+                                    <div class="row">
+
+                                        <!-- START -->
+                                        <div class="col-md-6">
+
+                                            <div class="form-group mb-3">
+
+                                                <label asp-for="SaleStartDate"
+                                                       class="fw-bold">
+
+                                                    Ngày bắt đầu
+
+                                                </label>
+
+                                                <input asp-for="SaleStartDate"
+                                                       class="form-control"
+                                                       type="datetime-local" />
+
+                                                <span asp-validation-for="SaleStartDate"
+                                                      class="text-danger">
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="form-check mb-3">
+
+                                            <input asp-for="IsHot"
+                                                   class="form-check-input" />
+
+                                            <label asp-for="IsHot"
+                                                   class="form-check-label fw-bold">
+
+                                                Sản phẩm HOT
+
+                                            </label>
+
+                                        </div>
+                                        <!-- END -->
+                                        <div class="col-md-6">
+
+                                            <div class="form-group mb-3">
+
+                                                <label asp-for="SaleEndDate"
+                                                       class="fw-bold">
+
+                                                    Ngày kết thúc
+
+                                                </label>
+
+                                                <input asp-for="SaleEndDate"
+                                                       class="form-control"
+                                                       type="datetime-local" />
+
+                                                <span asp-validation-for="SaleEndDate"
+                                                      class="text-danger">
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- CỘT PHẢI -->
+                    <div class="col-md-6">
+
+                        <!-- ẢNH -->
+                        <div class="form-group mb-3">
+
+                            <label asp-for="ImageUrl"
+                                   class="control-label fw-bold">
+
+                                Đường dẫn hình ảnh (URL)
+
+                            </label>
+
+                            <input asp-for="ImageUrl"
+                                   class="form-control"
+                                   placeholder="https://example.com/image.jpg" />
+
+                            <span asp-validation-for="ImageUrl"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <!-- MÔ TẢ -->
+                        <div class="form-group mb-3">
+
+                            <label asp-for="Description"
+                                   class="control-label fw-bold">
+
+                                Mô tả sản phẩm
+
+                            </label>
+
+                            <textarea asp-for="Description"
+                                      class="form-control"
+                                      rows="6"
+                                      placeholder="Nhập mô tả ngắn gọn về sản phẩm..."></textarea>
+
+                            <span asp-validation-for="Description"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <hr />
+
+                <!-- BUTTON -->
+                <div class="form-group mt-3 text-end">
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary me-2">
+
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Quay lại danh sách
+
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-warning fw-bold px-4">
+
+                        <i class="fa-solid fa-save"></i>
+                        TẠO MỚI
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+<style>
+
+    #saleFields {
+        display: none;
+    }
+
+</style>
+
+@section Scripts {
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+
+        $(document).ready(function () {
+
+            function toggleSaleFields() {
+
+                if ($('#saleSwitch').is(':checked')) {
+
+                    $('#saleFields').slideDown();
+
+                }
+                else {
+
+                    $('#saleFields').slideUp();
+
+                }
+            }
+
+            toggleSaleFields();
+
+            $('#saleSwitch').change(function () {
+
+                toggleSaleFields();
+
+            });
+
+        });
+
+    </script>
+}

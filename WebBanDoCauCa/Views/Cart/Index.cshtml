@@ -1,0 +1,76 @@
+﻿@model IEnumerable<WebBanDoCauCa.Models.CartItem>
+
+@{
+    ViewData["Title"] = "Giỏ hàng của bạn";
+}
+
+<div class="container mt-4">
+    <h2 class="fw-bold text-primary mb-4"><i class="fa-solid fa-cart-shopping"></i> GIỎ HÀNG CỦA BẠN</h2>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-hover align-middle bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 15%">Hình ảnh</th>
+                        <th>Sản phẩm</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <img src="@item.Product?.ImageUrl" alt="@item.Product?.Name" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: contain;">
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@item.Product?.Name</div>
+                                <small class="text-muted">Mã SP: #@item.ProductId</small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border p-2">@item.Quantity</span>
+                            </td>
+                            <td class="text-end">@item.Product?.Price.ToString("N0") VNĐ</td>
+                            <td class="text-end fw-bold text-danger">
+                                @((item.Quantity * item.Product?.Price ?? 0).ToString("N0")) VNĐ
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="table-light">
+                        <td colspan="4" class="text-end fw-bold h5">Tổng cộng:</td>
+                        <td class="text-end fw-bold h4 text-danger">
+                            @Model.Sum(x => x.Quantity * (x.Product?.Price ?? 0)).ToString("N0") VNĐ
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4 mb-5">
+            <a class="btn btn-outline-secondary fw-bold" asp-controller="Products" asp-action="Index">
+                <i class="fa-solid fa-arrow-left"></i> TIẾP TỤC MUA SẮM
+            </a>
+
+            @* NÚT QUAN TRỌNG NHẤT: DẪN ĐẾN TRANG THANH TOÁN *@
+            <a class="btn btn-success btn-lg px-5 fw-bold shadow"
+               asp-controller="Checkout"
+               asp-action="Index">
+                TIẾN HÀNH THANH TOÁN <i class="fa-solid fa-credit-card ms-2"></i>
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning text-center py-5">
+            <i class="fa-solid fa-cart-arrow-down fa-3x mb-3"></i>
+            <h4>Giỏ hàng của bạn đang trống!</h4>
+            <a class="btn btn-primary mt-3" asp-controller="Products" asp-action="Index">Mua sắm ngay</a>
+        </div>
+    }
+</div>
