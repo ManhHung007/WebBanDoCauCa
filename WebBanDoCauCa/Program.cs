@@ -5,12 +5,21 @@ using Microsoft.AspNetCore.Identity;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- CẤU HÌNH DATABASE ---
-// Dùng biến môi trường 'ConnectionStrings__DefaultConnection' (ưu tiên) hoặc từ appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+// Tự động chọn Provider dựa trên môi trường hoặc cấu hình
+// Khi deploy lên Render, ta sẽ cấu hình để nó dùng Npgsql (PostgreSQL)
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(connectionString)); // Máy cá nhân dùng SQL Server
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(connectionString)); // Server dùng PostgreSQL (Neon.tech)
+}
 
 // --- CẤU HÌNH IDENTITY ---
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
@@ -37,16 +46,14 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// --- TỰ ĐỘNG CẬP NHẬT DATABASE (MỚI THÊM) ---
-// Giúp app tự chạy lệnh "Update-Database" khi deploy lên server
+// --- TỰ ĐỘNG CẬP NHẬT DATABASE ---
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    // Lưu ý: Đảm bảo bạn đã có các file Migration trong project
     db.Database.Migrate();
 }
 
-// --- CẤU HÌNH MÔI TRƯỜNG ---
+// --- MIDDLEWARE ---
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -55,16 +62,11 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-// Kích hoạt Session
 app.UseSession();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Định tuyến
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Products}/{action=Index}/{id?}");
