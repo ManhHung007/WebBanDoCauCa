@@ -23,9 +23,9 @@ namespace WebBanDoCauCa.Controllers
             _userManager = userManager;
         }
 
-        // ==========================================================
-        // PUBLIC - LIST PRODUCTS
-        // ==========================================================
+        // =========================
+        // LIST PRODUCT
+        // =========================
         public async Task<IActionResult> Index(int? categoryId, string brand, decimal? maxPrice, string sortOrder)
         {
             var query = _context.Products
@@ -33,19 +33,13 @@ namespace WebBanDoCauCa.Controllers
                 .AsQueryable();
 
             if (categoryId.HasValue)
-            {
                 query = query.Where(p => p.CategoryId == categoryId);
-            }
 
-            if (!string.IsNullOrEmpty(brand))
-            {
+            if (!string.IsNullOrWhiteSpace(brand))
                 query = query.Where(p => p.Brand == brand);
-            }
 
             if (maxPrice.HasValue)
-            {
                 query = query.Where(p => p.Price <= maxPrice);
-            }
 
             query = sortOrder switch
             {
@@ -58,14 +52,18 @@ namespace WebBanDoCauCa.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            ViewBag.Categories = new SelectList(await _context.Categories.ToListAsync(), "Id", "Name", categoryId);
+            ViewBag.Categories = new SelectList(
+                await _context.Categories.ToListAsync(),
+                "Id", "Name",
+                categoryId
+            );
 
             return View(await query.ToListAsync());
         }
 
-        // ==========================================================
+        // =========================
         // DETAILS
-        // ==========================================================
+        // =========================
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -84,9 +82,9 @@ namespace WebBanDoCauCa.Controllers
             return View(product);
         }
 
-        // ==========================================================
-        // CREATE (ADMIN)
-        // ==========================================================
+        // =========================
+        // CREATE GET
+        // =========================
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
@@ -94,6 +92,9 @@ namespace WebBanDoCauCa.Controllers
             return View();
         }
 
+        // =========================
+        // CREATE POST (FIX UTC + SAFE DATA)
+        // =========================
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -107,24 +108,45 @@ namespace WebBanDoCauCa.Controllers
                     return View(product);
                 }
 
-                // 🔥 FIX NULL IMAGE
-                product.ImageUrl ??= "";
+                // IMAGE SAFE
+                product.ImageUrl = string.IsNullOrWhiteSpace(product.ImageUrl)
+                    ? null
+                    : product.ImageUrl.Trim();
 
-                // 🔥 CHECK CATEGORY EXISTS
+                // CATEGORY CHECK
                 var categoryExists = await _context.Categories
                     .AnyAsync(c => c.Id == product.CategoryId);
 
                 if (!categoryExists)
                 {
-                    return Content("CategoryId không tồn tại trong database");
+                    ModelState.AddModelError("CategoryId", "Danh mục không tồn tại");
+                    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                    return View(product);
                 }
 
-                // SALE LOGIC
+                // PRICE CHECK
+                if (product.Price <= 0)
+                {
+                    ModelState.AddModelError("Price", "Giá sản phẩm không hợp lệ");
+                    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                    return View(product);
+                }
+
+                // SALE RESET
                 if (!product.IsOnSale)
                 {
                     product.DiscountPercent = 0;
                     product.SaleStartDate = null;
                     product.SaleEndDate = null;
+                }
+                else
+                {
+                    // FIX NEON UTC ISSUE
+                    if (product.SaleStartDate.HasValue)
+                        product.SaleStartDate = DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
+
+                    if (product.SaleEndDate.HasValue)
+                        product.SaleEndDate = DateTime.SpecifyKind(product.SaleEndDate.Value, DateTimeKind.Utc);
                 }
 
                 _context.Products.Add(product);
@@ -134,14 +156,13 @@ namespace WebBanDoCauCa.Controllers
             }
             catch (Exception ex)
             {
-                // 🔥 HIỆN LỖI THẬT TRÊN RENDER
-                return Content(ex.ToString());
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
             }
         }
 
-        // ==========================================================
+        // =========================
         // EDIT
-        // ==========================================================
+        // =========================
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -169,13 +190,23 @@ namespace WebBanDoCauCa.Controllers
                     return View(product);
                 }
 
-                product.ImageUrl ??= "";
+                product.ImageUrl = string.IsNullOrWhiteSpace(product.ImageUrl)
+                    ? null
+                    : product.ImageUrl.Trim();
 
                 if (!product.IsOnSale)
                 {
                     product.DiscountPercent = 0;
                     product.SaleStartDate = null;
                     product.SaleEndDate = null;
+                }
+                else
+                {
+                    if (product.SaleStartDate.HasValue)
+                        product.SaleStartDate = DateTime.SpecifyKind(product.SaleStartDate.Value, DateTimeKind.Utc);
+
+                    if (product.SaleEndDate.HasValue)
+                        product.SaleEndDate = DateTime.SpecifyKind(product.SaleEndDate.Value, DateTimeKind.Utc);
                 }
 
                 _context.Update(product);
@@ -185,13 +216,13 @@ namespace WebBanDoCauCa.Controllers
             }
             catch (Exception ex)
             {
-                return Content(ex.ToString());
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
             }
         }
 
-        // ==========================================================
+        // =========================
         // DELETE
-        // ==========================================================
+        // =========================
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -222,9 +253,9 @@ namespace WebBanDoCauCa.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ==========================================================
+        // =========================
         // REVIEW
-        // ==========================================================
+        // =========================
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> AddReview(int productId, int rating, string comment)
