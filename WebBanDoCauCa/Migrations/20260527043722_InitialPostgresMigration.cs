@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WebBanDoCauCa.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialPostgresMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -36,15 +36,15 @@ namespace WebBanDoCauCa.Migrations
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     AccessFailedCount = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -305,7 +305,7 @@ namespace WebBanDoCauCa.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "Address", "ConcurrencyStamp", "Email", "EmailConfirmed", "FullName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "b7237254-8c44-486a-85b4-7b4455589025", 0, "Hanoi, Vietnam", "32f4e785-5f64-4bbf-94d4-e0c02d74063f", "admin@fishingpro.com", true, "Administrator", false, null, "ADMIN@FISHINGPRO.COM", "ADMIN@FISHINGPRO.COM", "AQAAAAIAAYagAAAAEMYfKMimFDUu0YygEf5yGFmUTnpBlWG4MXVy/Gs0c6HQMOxORaESoj0S8q6YBY6zKg==", null, false, "7b758ed0-2bd2-4c65-97ab-b074b3e813bb", false, "admin@fishingpro.com" });
+                values: new object[] { "b7237254-8c44-486a-85b4-7b4455589025", 0, "Hanoi, Vietnam", "c25bde9e-0913-4c1f-9d44-73670aad30da", "admin@fishingpro.com", true, "Administrator", false, null, "ADMIN@FISHINGPRO.COM", "ADMIN@FISHINGPRO.COM", "AQAAAAIAAYagAAAAECE+RLfQYlmKNJmG/Ar7EAqbnyX8RJbiRgghpNf3sgAJlQuGPTnMDRx0WoW/z1BpFw==", null, false, "7926a3e8-a91d-43a9-bc70-86693f7ab7a0", false, "admin@fishingpro.com" });
 
             migrationBuilder.InsertData(
                 table: "AspNetUserRoles",

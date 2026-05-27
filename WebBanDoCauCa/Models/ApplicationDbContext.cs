@@ -22,12 +22,21 @@ namespace WebBanDoCauCa.Models
         {
             base.OnModelCreating(modelBuilder);
 
-            // 1. Cấu hình độ chính xác cho kiểu Decimal (Fix cảnh báo)
+            // 1. Cấu hình kiểu dữ liệu cho các thực thể để tránh xung đột Postgres/SQL Server
             modelBuilder.Entity<Order>().Property(o => o.TotalAmount).HasPrecision(18, 2);
             modelBuilder.Entity<OrderDetail>().Property(od => od.Price).HasPrecision(18, 2);
             modelBuilder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
 
-            // 2. Chuyển đổi nvarchar sang text cho PostgreSQL
+            // Cấu hình rõ ràng cho ApplicationUser
+            modelBuilder.Entity<ApplicationUser>(entity =>
+            {
+                entity.Property(u => u.EmailConfirmed).HasColumnType("boolean");
+                entity.Property(u => u.PhoneNumberConfirmed).HasColumnType("boolean");
+                entity.Property(u => u.TwoFactorEnabled).HasColumnType("boolean");
+                entity.Property(u => u.LockoutEnabled).HasColumnType("boolean");
+            });
+
+            // 2. Tự động chuyển đổi các cột string thành 'text' cho PostgreSQL
             if (Database.IsNpgsql())
             {
                 foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -60,7 +69,8 @@ namespace WebBanDoCauCa.Models
                 EmailConfirmed = true,
                 FullName = "Administrator",
                 Address = "Hanoi, Vietnam",
-                PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(null!, "Admin@123")
+                PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(null!, "Admin@123"),
+                SecurityStamp = Guid.NewGuid().ToString() // Cần thiết cho Identity
             };
 
             modelBuilder.Entity<ApplicationUser>().HasData(adminUser);

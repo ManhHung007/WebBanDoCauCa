@@ -12,8 +12,8 @@ using WebBanDoCauCa.Models;
 namespace WebBanDoCauCa.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260527043057_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20260527043722_InitialPostgresMigration")]
+    partial class InitialPostgresMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -197,13 +197,13 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
@@ -223,13 +223,13 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
@@ -253,16 +253,16 @@ namespace WebBanDoCauCa.Migrations
                             Id = "b7237254-8c44-486a-85b4-7b4455589025",
                             AccessFailedCount = 0,
                             Address = "Hanoi, Vietnam",
-                            ConcurrencyStamp = "32f4e785-5f64-4bbf-94d4-e0c02d74063f",
+                            ConcurrencyStamp = "c25bde9e-0913-4c1f-9d44-73670aad30da",
                             Email = "admin@fishingpro.com",
                             EmailConfirmed = true,
                             FullName = "Administrator",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@FISHINGPRO.COM",
                             NormalizedUserName = "ADMIN@FISHINGPRO.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEMYfKMimFDUu0YygEf5yGFmUTnpBlWG4MXVy/Gs0c6HQMOxORaESoj0S8q6YBY6zKg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAECE+RLfQYlmKNJmG/Ar7EAqbnyX8RJbiRgghpNf3sgAJlQuGPTnMDRx0WoW/z1BpFw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "7b758ed0-2bd2-4c65-97ab-b074b3e813bb",
+                            SecurityStamp = "7926a3e8-a91d-43a9-bc70-86693f7ab7a0",
                             TwoFactorEnabled = false,
                             UserName = "admin@fishingpro.com"
                         });
