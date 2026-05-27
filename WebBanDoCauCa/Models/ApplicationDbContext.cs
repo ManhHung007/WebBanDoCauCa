@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
 using WebBanDoCauCa.Models;
 
 namespace WebBanDoCauCa.Models
@@ -38,7 +37,37 @@ namespace WebBanDoCauCa.Models
                 .HasPrecision(18, 2);
 
             // =====================================================
-            // 2. IDENTITY BOOLEAN FIX (POSTGRES)
+            // 2. FIX DATETIME UTC CHO NEON/POSTGRESQL
+            // Tất cả các cột DateTime phải là "timestamp with time zone"
+            // KHÔNG dùng EnableLegacyTimestampBehavior
+            // =====================================================
+
+            // Product: SaleStartDate, SaleEndDate
+            modelBuilder.Entity<Product>()
+                .Property(p => p.SaleStartDate)
+                .HasColumnType("timestamp with time zone");
+
+            modelBuilder.Entity<Product>()
+                .Property(p => p.SaleEndDate)
+                .HasColumnType("timestamp with time zone");
+
+            // Review: CreatedAt
+            modelBuilder.Entity<Review>()
+                .Property(r => r.CreatedAt)
+                .HasColumnType("timestamp with time zone");
+
+            // Order: OrderDate (không phải CreatedAt)
+            modelBuilder.Entity<Order>()
+                .Property(o => o.OrderDate)
+                .HasColumnType("timestamp with time zone");
+
+            // CartItem: DateCreated
+            modelBuilder.Entity<CartItem>()
+                .Property(c => c.DateCreated)
+                .HasColumnType("timestamp with time zone");
+
+            // =====================================================
+            // 3. IDENTITY BOOLEAN FIX (POSTGRES)
             // =====================================================
             modelBuilder.Entity<ApplicationUser>(entity =>
             {
@@ -49,7 +78,7 @@ namespace WebBanDoCauCa.Models
             });
 
             // =====================================================
-            // 3. STRING → TEXT (POSTGRES)
+            // 4. STRING → TEXT (POSTGRES)
             // =====================================================
             if (Database.IsNpgsql())
             {
@@ -58,18 +87,10 @@ namespace WebBanDoCauCa.Models
                     foreach (var property in entityType.GetProperties())
                     {
                         if (property.ClrType == typeof(string))
-                        {
                             property.SetColumnType("text");
-                        }
                     }
                 }
             }
-
-            // =====================================================
-            // 4. IMPORTANT: KHÔNG DÙNG VALUECONVERTER DATE TIME
-            // (TRÁNH CS1660 + LỖI BUILD RENDER)
-            // =====================================================
-            // 👉 Cách đúng: xử lý UTC ở controller/service, KHÔNG ép EF
 
             // =====================================================
             // 5. SEED CATEGORY

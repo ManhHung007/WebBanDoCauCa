@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebBanDoCauCa.Models;
@@ -11,9 +12,11 @@ using WebBanDoCauCa.Models;
 namespace WebBanDoCauCa.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260527073525_FixDateTimeUtc")]
+    partial class FixDateTimeUtc
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -248,16 +251,16 @@ namespace WebBanDoCauCa.Migrations
                             Id = "b7237254-8c44-486a-85b4-7b4455589025",
                             AccessFailedCount = 0,
                             Address = "Hanoi, Vietnam",
-                            ConcurrencyStamp = "4db1bd13-b178-4117-a3bc-b83f6b58f149",
+                            ConcurrencyStamp = "b5174814-ec6b-431e-8095-841de1c3bd88",
                             Email = "admin@fishingpro.com",
                             EmailConfirmed = true,
                             FullName = "Administrator",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@FISHINGPRO.COM",
                             NormalizedUserName = "ADMIN@FISHINGPRO.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHBuG8TjfAh3Wp6JyCHvrrZGaghYxOxuk0QfiXmXqBBtITvLLnbSaKXDS9/JrD4aHA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEAx28jKmjSNci0uFuzPfYcl24+85bhfLotful6qmZ3lsBkQ+bHR3ubC4De0SDfdxSA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "35427aa8-b343-46b0-8ee3-8a15ecf3e086",
+                            SecurityStamp = "69e2f725-ba91-47e4-9c63-0876d8700fa2",
                             TwoFactorEnabled = false,
                             UserName = "admin@fishingpro.com"
                         });
@@ -275,7 +278,7 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("integer");
@@ -351,7 +354,7 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("OrderDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Phone")
                         .IsRequired()
@@ -494,7 +497,7 @@ namespace WebBanDoCauCa.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("integer");
