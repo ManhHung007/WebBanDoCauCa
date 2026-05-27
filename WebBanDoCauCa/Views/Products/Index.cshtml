@@ -4,8 +4,12 @@
     var categories = ViewBag.Categories as IEnumerable<WebBanDoCauCa.Models.Category>;
 }
 
+@* Form ẩn để gửi Token chống tấn công CSRF *@
+<form id="antiforgery-form" style="display:none;">@Html.AntiForgeryToken()</form>
+
 <div class="container mt-4">
     <div class="row">
+        @* SIDEBAR BỘ LỌC *@
         <div class="col-md-3">
             <div class="card p-3 shadow-sm">
                 <h5 class="fw-bold">Bộ lọc</h5>
@@ -21,17 +25,18 @@
                     }
                 </div>
                 <div class="mb-3">
-                    <label class="fw-bold">Giá: <span id="priceVal">0 - 5.000.000</span></label>
+                    <label class="fw-bold">Giá tối đa: <span id="priceVal">5.000.000</span></label>
                     <input type="range" class="form-range" min="0" max="5000000" step="100000" id="priceRange">
                 </div>
                 <button class="btn btn-primary w-100" onclick="applyFilters()">Áp dụng lọc</button>
             </div>
         </div>
 
+        @* DANH SÁCH SẢN PHẨM *@
         <div class="col-md-9">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="fw-bold">Sản phẩm</h4>
-                <select class="form-select w-25" onchange="window.location.href='?sortOrder=' + this.value">
+                <select id="sortOrder" class="form-select w-25" onchange="applyFilters()">
                     <option value="">Sắp xếp giá</option>
                     <option value="price_asc">Thấp đến cao</option>
                     <option value="price_desc">Cao đến thấp</option>
@@ -61,15 +66,60 @@
 </div>
 
 <script>
-    // Xử lý slider giá
-    document.getElementById('priceRange').oninput = function() {
-        document.getElementById('priceVal').innerText = "0 - " + parseInt(this.value).toLocaleString();
+    $(document).ready(function () {
+        // 1. Tự động khôi phục UI từ URL
+        const params = new URLSearchParams(window.location.search);
+
+        // Checkbox
+        const catIds = params.get('categoryIds');
+        if (catIds) {
+            catIds.split(',').forEach(id => $('#cat_' + id).prop('checked', true));
+        }
+
+        // Giá & Sắp xếp
+        if (params.get('maxPrice')) $('#priceRange').val(params.get('maxPrice'));
+        $('#priceVal').text(parseInt($('#priceRange').val()).toLocaleString());
+        $('#sortOrder').val(params.get('sortOrder'));
+
+        // Cập nhật text giá khi kéo thanh trượt
+        $('#priceRange').on('input', function() {
+            $('#priceVal').text(parseInt(this.value).toLocaleString());
+        });
+    });
+
+    // 2. Hàm gom tất cả dữ liệu và reload trang
+    function applyFilters() {
+        let cats = $('.cat-filter:checked').map(function() { return $(this).val(); }).get();
+        let maxPrice = $('#priceRange').val();
+        let sortOrder = $('#sortOrder').val();
+
+        let url = window.location.pathname + '?';
+        if (cats.length > 0) url += 'categoryIds=' + cats.join(',') + '&';
+        url += 'maxPrice=' + maxPrice + '&sortOrder=' + sortOrder;
+
+        window.location.href = url;
     }
 
-    function applyFilters() {
-        let cats = [];
-        $('.cat-filter:checked').each(function() { cats.push($(this).val()); });
-        let maxPrice = $('#priceRange').val();
-        window.location.href = `?categoryIds=${cats.join(',')}&maxPrice=${maxPrice}`;
-    }
+    // 3. Xử lý thêm vào giỏ hàng qua AJAX
+    $(document).on('click', '.btn-add-to-cart', function () {
+        var productId = $(this).data('id');
+        var token = $('#antiforgery-form input[name="__RequestVerificationToken"]').val();
+
+        $.ajax({
+            url: '@Url.Action("AddToCart", "Cart")',
+            type: 'POST',
+            data: { productId: productId, quantity: 1 },
+            headers: { 'RequestVerificationToken': token },
+            success: function (res) {
+                if (res.success) {
+                    alert("Đã thêm sản phẩm vào giỏ!");
+                } else {
+                    alert("Lỗi: " + res.message);
+                }
+            },
+            error: function () {
+                alert("Không thể kết nối máy chủ.");
+            }
+        });
+    });
 </script>
