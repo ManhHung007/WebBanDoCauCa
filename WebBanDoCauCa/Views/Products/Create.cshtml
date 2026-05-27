@@ -1,83 +1,78 @@
-﻿[Authorize(Roles = "Admin")]
-public IActionResult Create()
-{
-    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
-    return View();
+﻿@model WebBanDoCauCa.Models.Product
+
+@{
+    ViewData["Title"] = "Thêm sản phẩm mới";
 }
 
-[HttpPost]
-[ValidateAntiForgeryToken]
-[Authorize(Roles = "Admin")]
-public async Task<IActionResult>
-    Create(Product product)
-    {
-    try
-    {
-    // =========================
-    // 1. CHECK MODEL VALIDATION
-    // =========================
-    if (!ModelState.IsValid)
-    {
-    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-    return View(product);
-    }
+<h1>Thêm sản phẩm</h1>
 
-    // =========================
-    // 2. FIX NULL IMAGE
-    // =========================
-    product.ImageUrl = string.IsNullOrWhiteSpace(product.ImageUrl)
-    ? ""
-    : product.ImageUrl.Trim();
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    // =========================
-    // 3. CHECK CATEGORY EXISTS (FK SAFE)
-    // =========================
-    var categoryExists = await _context.Categories
-    .AnyAsync(c => c.Id == product.CategoryId);
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="control-label">Tên sản phẩm</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
 
-    if (!categoryExists)
-    {
-    ModelState.AddModelError("CategoryId", "Danh mục không tồn tại trong hệ thống");
-    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-    return View(product);
-    }
+            <div class="form-group mb-3">
+                <label asp-for="Price" class="control-label">Giá</label>
+                <input asp-for="Price" class="form-control" type="number" step="0.01" />
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
 
-    // =========================
-    // 4. VALIDATE PRICE (TRÁNH LỖI INPUT)
-    // =========================
-    if (product.Price <= 0)
-    {
-    ModelState.AddModelError("Price", "Giá sản phẩm không hợp lệ");
-    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-    return View(product);
-    }
+            <div class="form-group mb-3">
+                <label asp-for="CategoryId" class="control-label">Danh mục</label>
+                <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+            </div>
 
-    // =========================
-    // 5. SALE LOGIC SAFE RESET
-    // =========================
-    if (!product.IsOnSale)
-    {
-    product.DiscountPercent = 0;
-    product.SaleStartDate = null;
-    product.SaleEndDate = null;
-    }
+            <div class="form-group mb-3">
+                <label asp-for="ImageUrl" class="control-label">Link ảnh</label>
+                <input asp-for="ImageUrl" class="form-control" />
+            </div>
 
-    // =========================
-    // 6. INSERT DB (SAFE)
-    // =========================
-    _context.Products.Add(product);
-    await _context.SaveChangesAsync();
+            <div class="form-group form-check mb-3">
+                <input class="form-check-input" asp-for="IsOnSale" id="isOnSale" />
+                <label class="form-check-label" for="isOnSale">Đang giảm giá</label>
+            </div>
 
-    return RedirectToAction(nameof(Index));
+            <div id="saleFields" style="display:none;">
+                <div class="form-group mb-3">
+                    <label asp-for="DiscountPercent" class="control-label">% Giảm giá</label>
+                    <input asp-for="DiscountPercent" class="form-control" type="number" />
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="SaleStartDate" class="control-label">Ngày bắt đầu</label>
+                    <input asp-for="SaleStartDate" class="form-control" type="datetime-local" />
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="SaleEndDate" class="control-label">Ngày kết thúc</label>
+                    <input asp-for="SaleEndDate" class="form-control" type="datetime-local" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Lưu sản phẩm" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Script để ẩn/hiện các ô giảm giá khi tích vào checkbox
+        const chk = document.getElementById('isOnSale');
+        const fields = document.getElementById('saleFields');
+
+        chk.addEventListener('change', function() {
+            fields.style.display = this.checked ? 'block' : 'none';
+        });
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    catch (DbUpdateException dbEx)
-    {
-    // 🔥 LỖI DATABASE (FK, NOT NULL, constraint)
-    return StatusCode(500, $"Database error: {dbEx.InnerException?.Message ?? dbEx.Message}");
-    }
-    catch (Exception ex)
-    {
-    // 🔥 LỖI KHÁC
-    return StatusCode(500, ex.ToString());
-    }
-    }
+}
