@@ -4,14 +4,15 @@ using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Cấu hình Database
+// --- CẤU HÌNH DATABASE ---
+// Dùng biến môi trường 'ConnectionStrings__DefaultConnection' (ưu tiên) hoặc từ appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Cấu hình Identity
+// --- CẤU HÌNH IDENTITY ---
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = false;
@@ -22,7 +23,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// 1. CẤU HÌNH SESSION (Mới thêm)
+// --- CẤU HÌNH SESSION ---
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -36,7 +37,16 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// Cấu hình môi trường
+// --- TỰ ĐỘNG CẬP NHẬT DATABASE (MỚI THÊM) ---
+// Giúp app tự chạy lệnh "Update-Database" khi deploy lên server
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    // Lưu ý: Đảm bảo bạn đã có các file Migration trong project
+    db.Database.Migrate();
+}
+
+// --- CẤU HÌNH MÔI TRƯỜNG ---
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -48,7 +58,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// 2. KÍCH HOẠT SESSION (PHẢI nằm sau UseRouting và trước các Map)
+// Kích hoạt Session
 app.UseSession();
 
 app.UseAuthentication();
